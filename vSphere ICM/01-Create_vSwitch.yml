@@ -1,7 +1,7 @@
 ---
 - hosts: localhost
   vars:
-    ansible_python_interpreter: /bin/python
+    ansible_python_interpreter: /bin/python3
     vcenter_hostname: "172.0.10.10"
     vcenter_username: "administrator@vsphere.local"
     vcenter_password: "VMware1!"
@@ -20,8 +20,6 @@
           password: '{{ esxi_password }}'
           validate_certs: no
           switch: '{{ student_ID }}'
-#         nics: 
-#         mtu: 9000
       delegate_to: localhost
 
 
