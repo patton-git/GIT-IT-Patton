@@ -1,0 +1,43 @@
+---
+- hosts: localhost
+  vars:
+    ansible_python_interpreter: /bin/python3
+    vcenter_hostname: "172.0.10.10"
+    vcenter_username: "administrator@vsphere.local"
+    vcenter_password: "VMware1!"
+    datacenter_name: "vSAN Datacenter"
+    cluster_name: "vSAN Cluster"
+    esxi_hostname: "172.0.10.13"
+    student_ID: "S13"
+    datastore_name: "vsanDatastore"
+    template_name: "Win2019"
+    snapshot_src_name: "Before_DC"
+    folder_prefix: "1.Internal-Education/Students/"
+    full_folder_prefix: "vSAN Datacenter/vm/1.Internal-Education/Students/"
+
+  tasks:
+  - name: Deploy Domain Controller VM from Template
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ student_ID + '-DC' }}"
+      state: "poweredon"
+      datacenter: '{{ datacenter_name }}'
+      folder: "{{ full_folder_prefix + student_ID }}"
+      esxi_hostname: '{{ esxi_hostname }}'
+      datastore: "{{ datastore_name }}"
+      template: "{{ template_name }}"
+      linked_clone: True
+      snapshot_src: "{{ snapshot_src_name }}"
+      networks:
+      - name: "{{ student_ID + '-Mgmt' }}"
+        connected: True
+        start_connected: True
+        ip: 10.10.1.2
+        netmask: 255.255.255.0
+        gateway: 10.10.1.1
+        dns_servers: 172.0.10.2
+        type: static
+    delegate_to: localhost

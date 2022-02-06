@@ -67,11 +67,9 @@
           vm_username: 'Administrator'
           vm_password: 'VMware1!'
           vm_shell: 'c:\windows\system32\windowspowershell\v1.0\powershell.exe'
-##          vm_shell_args: '-command "(Install-ADDSForest -CreateDnsDelegation:$false -DatabasePath "C:\Windows\NTDS" -DomainMode "WinThreshold" -DomainName "vclass.local" -DomainNetbiosName "VCLASS" -ForestMode "WinThreshold" -InstallDns:$true -LogPath "C:\Windows\NTDS" -NoRebootOnCompletion:$false -SysvolPath "C:\Windows\SYSVOL" -Force:$true")"'
           vm_shell_args: '-command "(Install-ADDSForest -CreateDnsDelegation:$false -DatabasePath C:\Windows\NTDS -DomainMode WinThreshold -DomainName vclass.local -DomainNetbiosName VCLASS -ForestMode WinThreshold -InstallDns:$true -LogPath C:\Windows\NTDS -NoRebootOnCompletion:$false -SysvolPath C:\Windows\SYSVOL -Force:$true -SafeModeAdministratorPassword (ConvertTo-SecureString -AsPlainText "VMware1!" -force)")"'
-
           vm_shell_cwd: 'c:\Users\Administrator'
           wait_for_process: True
-          timeout: 900
+          timeout: 180
       delegate_to: localhost
       register: shell_command_with_wait_timeout
