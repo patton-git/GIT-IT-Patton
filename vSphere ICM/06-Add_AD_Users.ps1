@@ -5,7 +5,7 @@ $ou="Student"
 New-ADOrganizationalUnit -Name $ou -Path $dcpath
 
 
-$oupath=$ou+","+$dcpath
+$oupath="OU=" + $ou + "," + $dcpath
 ## Get-ADOrganizationalUnit -Identity $oupath | Set-ADObject -ProtectedFromAccidentalDeletion:$false -PassThru | Remove-ADOrganizationalUnit -Confirm:$false
 
 $groupname="Students"
