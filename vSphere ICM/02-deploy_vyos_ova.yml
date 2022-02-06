@@ -43,7 +43,7 @@
           name: "{{ student_ID + '-Router' }}"
           networks: { 'DPG-172.0.10.x': "{{ public_net }}", 'DPG-172.0.20.x': "{{ private_net }}" }
           power_on: yes
-          ovf: /mnt/d/Download/temp-vyos-1.4.ova    
+          ovf: /mnt/c/temp-vyos-1.4.ova    
       delegate_to: localhost
 
 
