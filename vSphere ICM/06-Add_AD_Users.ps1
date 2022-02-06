@@ -1,5 +1,7 @@
 ## 파일을 다운로드하여 실항할 경우, Powershell의 실행 정책 설정을 확인해 주시길 바랍니다.
-## Set-ExecutionPolicy -ExecutionPolicy Undefined -Scope CurrentUser
+## Get-ExecutionPolicy
+## Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser confirm:$false
+## Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope LocalMachine confirm:$false
 
 
 ## AD 모듈 설치
