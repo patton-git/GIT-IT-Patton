@@ -74,13 +74,13 @@
       delegate_to: localhost
       register: shell_command_with_wait_timeout
 
-  - name: Reboot DC VM
-    community.vmware.vmware_guest:
-      hostname: "{{ vcenter_hostname }}"
-      username: "{{ vcenter_username }}"
-      password: "{{ vcenter_password }}"
-      validate_certs: no
-      name: "{{ student_ID + '-DC' }}"
-      state: "rebootguest"
-      state_change_timeout: 60
-    delegate_to: localhost
+    - name: Reboot DC VM
+      community.vmware.vmware_guest:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: no
+        name: "{{ student_ID + '-DC' }}"
+        state: "rebootguest"
+        state_change_timeout: 60
+      delegate_to: localhost
