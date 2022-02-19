@@ -27,7 +27,8 @@
         folder_name: '{{ item }}'
         parent_folder: '{{ folder_prefix }}'
         state: present
-    loop: { S00, S01, S02, S03, S04, S05, S06, S07, S08, S09, S10, S11, S12, S13 }   
+    loop:
+     - [ S00, S01, S02, S03, S04, S05, S06, S07, S08, S09, S10, S11, S12, S13 ]
     register: sub_folder_creation_result
     delegate_to: localhost
 
