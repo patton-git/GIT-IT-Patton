@@ -29,6 +29,7 @@
       password: '{{ vcenter_password }}'
       validate_certs: 'false'
       datacenter: '{{ datacenter_name }}'
+      folder: "{{ full_folder_prefix + student_ID }}"      
       esxi_hostname: '{{ esxi_hostname }}'
       name: '{{ item.vm_name }}'
       datastore: 'vsanDatastore'
@@ -58,7 +59,7 @@
     - { vm_name: "{{student_ID+'-ESXi-01'}}", host_name: sa-esxi-01, ipaddr: 10.10.10.11 }
     - { vm_name: "{{student_ID+'-ESXi-02'}}", host_name: sa-esxi-02, ipaddr: 10.10.10.12 }
     - { vm_name: "{{student_ID+'-ESXi-03'}}", host_name: sa-esxi-03, ipaddr: 10.10.10.13 }
-    - { vm_name: "{{student_ID+'-ESXi-04'}}", host_name: sa-esxi-03, ipaddr: 10.10.10.14 }
+    - { vm_name: "{{student_ID+'-ESXi-04'}}", host_name: sa-esxi-04, ipaddr: 10.10.10.14 }
 
   - name: Waiting customization
     wait_for:
@@ -158,7 +159,7 @@
       state: present
       force: yes
     with_nested:
-      - [ "{{student_ID+'-ESXi-01'}}", "{{student_ID+'-ESXi-02'}}", "{{student_ID+'-ESXi-03'}}" ]
+      - [ "{{student_ID+'-ESXi-01'}}", "{{student_ID+'-ESXi-02'}}", "{{student_ID+'-ESXi-03'}}", "{{student_ID+'-ESXi-04'}}" ]
       - [ "Network adapter 1", "Network adapter 2", "Network adapter 3", "Network adapter 4" ]
     delegate_to: localhost
 
