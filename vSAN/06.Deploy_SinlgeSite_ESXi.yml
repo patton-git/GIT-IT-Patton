@@ -34,7 +34,7 @@
       name: '{{ item.vm_name }}'
       datastore: 'vsanDatastore'
       disk_provisioning: "thin"
-      networks: { 'VM Network': "{{ student_ID + "-Trunk" }}" }
+      networks: { 'VM Network': "{{ student_ID + '-Trunk' }}" }
       power_on: yes
       ovf: /mnt/d/esxi_703c.ova
       wait: no
