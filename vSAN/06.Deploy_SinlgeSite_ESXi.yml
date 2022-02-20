@@ -63,7 +63,7 @@
 
   - name: Waiting customization
     wait_for:
-      timeout: 180
+      timeout: 120
     delegate_to: localhost
 
 
@@ -84,9 +84,9 @@
     delegate_to: localhost
 
 
-  - name: Waiting customization
+  - name: Waiting shutdown
     wait_for:
-      timeout: 60
+      timeout: 30
     delegate_to: localhost
 
 
@@ -178,10 +178,4 @@
       - "{{student_ID+'-ESXi-02'}}"
       - "{{student_ID+'-ESXi-03'}}"
       - "{{student_ID+'-ESXi-04}}"      
-    delegate_to: localhost
-
-
-  - name: Waiting Boot Up
-    wait_for:
-      timeout: 60
     delegate_to: localhost
