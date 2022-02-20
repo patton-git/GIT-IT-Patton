@@ -36,7 +36,7 @@
       disk_provisioning: "thin"
       networks: { 'VM Network': "{{ student_ID + '-Trunk' }}" }
       power_on: yes
-      ovf: /mnt/d/esxi_703c.ova
+      ovf: /mnt/c/esxi_703c.ova
       wait: no
       properties:
         guestinfo.hostname: "{{ item.host_name }}"
