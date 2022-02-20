@@ -9,7 +9,6 @@
     cluster_name: "vSAN Cluster"
 #    esxi_hostname: "172.0.10.13"
 #    student_ID: "S00"
-    vmk0_network: "DPG-172.0.10.x"
     full_folder_prefix: "vSAN Datacenter/vm/1.Internal-Education/Students/"
 
   vars_prompt:
@@ -155,7 +154,7 @@
       validate_certs: no
       name: "{{ item[0] }}"
       label: "{{ item[1] }}"
-      network_name: "{{ vmk0_network }}"
+      network_name: "{{ student_ID + '-Trunk' }}"
       state: present
       force: yes
     with_nested:
