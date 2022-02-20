@@ -53,7 +53,7 @@
       customization:
         password: VMware1!
       wait_for_customization: yes
-      wait_for_customization_timeout: 900
+      wait_for_customization_timeout: 300
     delegate_to: localhost
 
   - name: shutdown VM to change network connection
