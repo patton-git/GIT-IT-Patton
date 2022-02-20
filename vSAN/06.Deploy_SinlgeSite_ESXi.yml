@@ -142,7 +142,7 @@
       - "{{student_ID+'-ESXi-01'}}"
       - "{{student_ID+'-ESXi-02'}}"
       - "{{student_ID+'-ESXi-03'}}"
-      - "{{student_ID+'-ESXi-04}}"      
+      - "{{student_ID+'-ESXi-04'}}"      
     delegate_to: localhost
 
 
@@ -177,5 +177,5 @@
       - "{{student_ID+'-ESXi-01'}}"
       - "{{student_ID+'-ESXi-02'}}"
       - "{{student_ID+'-ESXi-03'}}"
-      - "{{student_ID+'-ESXi-04}}"      
+      - "{{student_ID+'-ESXi-04'}}"      
     delegate_to: localhost
