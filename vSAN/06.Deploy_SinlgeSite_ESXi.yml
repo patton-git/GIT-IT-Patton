@@ -1,0 +1,187 @@
+---
+- hosts: localhost
+  vars:
+    ansible_python_interpreter: /bin/python3
+    vcenter_hostname: "172.0.10.10"
+    vcenter_username: "administrator@vsphere.local"
+    vcenter_password: "VMware1!"
+    datacenter_name: "vSAN Datacenter"
+    cluster_name: "vSAN Cluster"
+#    esxi_hostname: "172.0.10.13"
+#    student_ID: "S00"
+    vmk0_network: "DPG-172.0.10.x"
+    full_folder_prefix: "vSAN Datacenter/vm/1.Internal-Education/Students/"
+
+  vars_prompt:
+    - name: student_ID
+      prompt: What is your student ID (ex:S00)?
+      private: no
+
+    - name: esxi_hostname
+      prompt: What is your esxi_hostname (ex:172.0.10.13)?
+      private: no
+
+
+  tasks: 
+  - name: Deploy multiple esxi vms
+    community.vmware.vmware_deploy_ovf:
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      validate_certs: 'false'
+      datacenter: '{{ datacenter_name }}'
+      esxi_hostname: '{{ esxi_hostname }}'
+      name: '{{ item.vm_name }}'
+      datastore: 'vsanDatastore'
+      disk_provisioning: "thin"
+      networks: { 'VM Network': "{{ student_ID + "-Trunk" }}" }
+      power_on: yes
+      ovf: /mnt/d/esxi_703c.ova
+      wait: no
+      properties:
+        guestinfo.hostname: "{{ item.host_name }}"
+        guestinfo.ipaddress: "{{ item.ipaddr }}"
+        guestinfo.netmask: "255.255.255.0"
+        guestinfo.gateway: "10.10.10.1"
+        guestinfo.vlan: "10"
+        guestinfo.dns: "10.10.10.2"
+        guestinfo.domain: "vclass.local"
+        guestinfo.ntp: "kr.pool.ntp.org"
+#        guestinfo.syslog: "{{nested_esxi_hosts_syslog}}"
+        guestinfo.password: "VMware1!"
+#        guestinfo.ssh_key: ""
+        guestinfo.ssh: "True"
+        guestinfo.createvmfs: "False"
+        guestinfo.followmac: "True"
+#        guestinfo.debug: "False"
+    delegate_to: localhost
+    with_items:
+    - { vm_name: "{{student_ID+'-ESXi-01'}}", host_name: sa-esxi-01, ipaddr: 10.10.10.11 }
+    - { vm_name: "{{student_ID+'-ESXi-02'}}", host_name: sa-esxi-02, ipaddr: 10.10.10.12 }
+    - { vm_name: "{{student_ID+'-ESXi-03'}}", host_name: sa-esxi-03, ipaddr: 10.10.10.13 }
+    - { vm_name: "{{student_ID+'-ESXi-04'}}", host_name: sa-esxi-03, ipaddr: 10.10.10.14 }
+
+  - name: Waiting customization
+    wait_for:
+      timeout: 180
+    delegate_to: localhost
+
+
+  
+  - name: shutdown ESXi VMs
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ item }}"
+      state: "shutdownguest"
+    loop:
+      - "{{student_ID+'-ESXi-01'}}"
+      - "{{student_ID+'-ESXi-02'}}"
+      - "{{student_ID+'-ESXi-03'}}"
+      - "{{student_ID+'-ESXi-04'}}"
+    delegate_to: localhost
+
+
+  - name: Waiting customization
+    wait_for:
+      timeout: 60
+    delegate_to: localhost
+
+
+  - name: Change vCPU, vRAM
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      datacenter: "{{ datacenter_name }}"
+      name: "{{ item }}"
+      hardware:
+        memory_mb: 16384
+        num_cpus: 4
+    loop:
+      - "{{student_ID+'-ESXi-01'}}"
+      - "{{student_ID+'-ESXi-02'}}"
+      - "{{student_ID+'-ESXi-03'}}"
+      - "{{student_ID+'-ESXi-04'}}"
+    delegate_to: localhost
+
+
+  - name: Adding ESXi VM Disks
+    community.vmware.vmware_guest_disk:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      datacenter: "{{ datacenter_name }}"
+      name: "{{ item }}"
+      disk:
+        - size_gb: 40
+          state: present
+          controller_type: nvme
+          controller_number: 0
+          unit_number: 0
+        - size_gb: 40
+          state: present
+          controller_type: nvme
+          controller_number: 0
+          unit_number: 1
+        - size_gb: 200
+          state: present
+          controller_type: nvme
+          controller_number: 0
+          unit_number: 2
+        - size_gb: 200
+          state: present
+          controller_type: nvme
+          controller_number: 0
+          unit_number: 3
+    loop:
+      - "{{student_ID+'-ESXi-01'}}"
+      - "{{student_ID+'-ESXi-02'}}"
+      - "{{student_ID+'-ESXi-03'}}"
+      - "{{student_ID+'-ESXi-04}}"      
+    delegate_to: localhost
+
+
+# https://stackoverflow.com/questions/59626587/how-to-change-vmware-network-adapter-with-ansible
+  - name: Adding ESXi VMs Network Interfaces
+    community.vmware.vmware_guest_network:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ item[0] }}"
+      label: "{{ item[1] }}"
+      network_name: "{{ vmk0_network }}"
+      state: present
+      force: yes
+    with_nested:
+      - [ "{{student_ID+'-ESXi-01'}}", "{{student_ID+'-ESXi-02'}}", "{{student_ID+'-ESXi-03'}}" ]
+      - [ "Network adapter 1", "Network adapter 2", "Network adapter 3", "Network adapter 4" ]
+    delegate_to: localhost
+
+
+# https://docs.ansible.com/ansible/latest/collections/community/vmware/vmware_guest_module.html
+  - name: Power on ESXi VMs
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ item }}"
+      state: "poweredon"
+    loop:
+      - "{{student_ID+'-ESXi-01'}}"
+      - "{{student_ID+'-ESXi-02'}}"
+      - "{{student_ID+'-ESXi-03'}}"
+      - "{{student_ID+'-ESXi-04}}"      
+    delegate_to: localhost
+
+
+  - name: Waiting Boot Up
+    wait_for:
+      timeout: 60
+    delegate_to: localhost
