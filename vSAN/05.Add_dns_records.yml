@@ -45,7 +45,7 @@
         vm_username: 'Administrator'
         vm_password: 'VMware1!'
         vm_shell: 'c:\windows\system32\windowspowershell\v1.0\powershell.exe'
-        vm_shell_args: '-command "(c:\Material\05-Add_dns_records.ps1)"'
+        vm_shell_args: '-command "(c:\Material\05.Add_dns_records.ps1)"'
         vm_shell_cwd: 'c:\Users\Administrator'
         wait_for_process: True
         timeout: 60
@@ -62,7 +62,7 @@
         vm_username: 'Administrator'
         vm_password: 'VMware1!'
         vm_shell: 'c:\windows\system32\windowspowershell\v1.0\powershell.exe'
-        vm_shell_args: '-command "(Remove-Item -path c:\Material\05-Add_dns_records.ps1)"'
+        vm_shell_args: '-command "(Remove-Item -path c:\Material\05.Add_dns_records.ps1)"'
         vm_shell_cwd: 'c:\Users\Administrator'
         wait_for_process: True
       delegate_to: localhost
