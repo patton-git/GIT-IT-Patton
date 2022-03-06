@@ -33,7 +33,7 @@
       password: "{{ vcenter_password }}"
       validate_certs: no
       name: "{{ student_ID + '-VCSA' }}"
-      state: "poweredon"
+      state: "poweredoff"
       datacenter: '{{ datacenter_name }}'
       folder: "{{ full_folder_prefix + student_ID }}"
       esxi_hostname: '{{ esxi_hostname }}'
@@ -41,21 +41,19 @@
       template: "{{ template_name }}"
       linked_clone: True
       snapshot_src: "{{ snapshot_src_name }}"
-      networks:
-      - name: "{{ student_ID + '-SA-Mgmt' }}"
-        connected: True
-        start_connected: True
     delegate_to: localhost
 
-  - name: shutdown VM to change network connection
-    community.vmware.vmware_guest:
+  - name: Change Network Interfaces
+    community.vmware.vmware_guest_network:
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       validate_certs: no
       name: "{{ student_ID + '-VCSA' }}"
-      state: "shutdownguest"
-      state_change_timeout: 60
+      label: "Network adapter 1"
+      network_name: "{{ student_ID + '-SA-Mgmt' }}"
+      state: present
+      force: yes
     delegate_to: localhost
 
   - name: Poweron VCSA VM
