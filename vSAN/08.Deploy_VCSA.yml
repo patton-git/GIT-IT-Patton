@@ -46,3 +46,25 @@
         connected: True
         start_connected: True
     delegate_to: localhost
+
+  - name: shutdown VM to change network connection
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ student_ID + '-VCSA' }}"
+      state: "shutdownguest"
+      state_change_timeout: 60
+    delegate_to: localhost
+
+  - name: Poweron DC VM
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ student_ID + '-VCSA' }}"
+      state: "poweredon"
+      state_change_timeout: 60
+    delegate_to: localhost
