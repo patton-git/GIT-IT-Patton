@@ -58,7 +58,7 @@
       state_change_timeout: 60
     delegate_to: localhost
 
-  - name: Poweron DC VM
+  - name: Poweron VCSA VM
     community.vmware.vmware_guest:
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
