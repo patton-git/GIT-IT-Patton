@@ -1,10 +1,15 @@
 # 정방향 조회 도메인 만들기
+
 # Add-DnsServerPrimaryZone -Name "vclass.local" -ZoneFile "vclass.local.dns"
 
+
 # 역방향 조회 도메인 만들기
+
 Add-DnsServerPrimaryZone -NetworkID 10.10.0.0/16 -ZoneFile "10.10.in-addr.arpa.dns"
 
+
 # DNS 포워딩 
+
 # Add-DnsServerForwarder -IPAddress 172.0.10.2 -PassThru
 
 # Domain Controller Record
