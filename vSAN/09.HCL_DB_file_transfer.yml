@@ -1,0 +1,34 @@
+---
+- hosts: localhost
+  vars:
+    ansible_python_interpreter: /bin/python3
+    vcenter_hostname: "172.0.10.10"
+    vcenter_username: "administrator@vsphere.local"
+    vcenter_password: "VMware1!"
+    datacenter_name: "vSAN Datacenter"
+    cluster_name: "vSAN Cluster"
+#    student_ID: "S13"
+    folder_prefix: "1.Internal-Education/Students/"
+    full_folder_prefix: "vSAN Datacenter/vm/1.Internal-Education/Students/"
+
+  vars_prompt:
+    - name: student_ID
+      prompt: What is your student ID (ex:S00)?
+      private: no
+
+  tasks: 
+    - name: Copy HCL DB file to VM
+      community.vmware.vmware_guest_file_operation:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: 'false'
+        vm_id: "{{ student_ID + '-DC' }}"
+        vm_id_type: vm_name
+        vm_username: 'Administrator'
+        vm_password: 'VMware1!'
+        copy:
+            src: "/mnt/c/ansible/all.json"
+            dest: "c:\\Material\\all.json"
+            overwrite: true
+      delegate_to: localhost
