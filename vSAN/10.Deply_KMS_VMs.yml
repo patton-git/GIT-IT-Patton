@@ -1,0 +1,75 @@
+---
+- hosts: localhost
+  vars:
+    ansible_python_interpreter: /bin/python3
+    vcenter_hostname: "172.0.10.10"
+    vcenter_username: "administrator@vsphere.local"
+    vcenter_password: "VMware1!"
+    datacenter_name: "vSAN Datacenter"
+    cluster_name: "vSAN Cluster"
+    datastore_name: "vsanDatastore"
+    template_name: "Temp-vSAN-KMS-01"
+    snapshot_src_name: "vmwkmip"
+    folder_prefix: "1.Internal-Education/Students/"
+    full_folder_prefix: "vSAN Datacenter/vm/1.Internal-Education/Students/"
+
+  tasks:
+  - name: Deploy KMS-VMs from Template
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ item.vm_name + '-SA-KMS-01' }}"
+      state: "poweredon"
+      datacenter: '{{ datacenter_name }}'
+      folder: "{{ full_folder_prefix + item.vm_name }}"
+      esxi_hostname: '{{ item.esxi_host }}'
+      datastore: "{{ datastore_name }}"
+      template: "{{ template_name }}"
+      linked_clone: True
+      snapshot_src: "{{ snapshot_src_name }}"
+    loop:
+      - { vm_name: S00, esxi_host: 172.0.10.13 }
+      - { vm_name: S01, esxi_host: 172.0.10.11 }
+      - { vm_name: S02, esxi_host: 172.0.10.12 }
+      - { vm_name: S03, esxi_host: 172.0.10.13 }
+      - { vm_name: S04, esxi_host: 172.0.10.11 }
+      - { vm_name: S05, esxi_host: 172.0.10.12 }
+      - { vm_name: S06, esxi_host: 172.0.10.13 }
+      - { vm_name: S07, esxi_host: 172.0.10.11 }
+      - { vm_name: S08, esxi_host: 172.0.10.12 }
+      - { vm_name: S09, esxi_host: 172.0.10.13 }
+      - { vm_name: S10, esxi_host: 172.0.10.11 }
+      - { vm_name: S11, esxi_host: 172.0.10.12 }
+      - { vm_name: S12, esxi_host: 172.0.10.13 }
+      - { vm_name: S13, esxi_host: 172.0.10.11 }      
+    delegate_to: localhost
+
+  - name: Change Network Interfaces
+    community.vmware.vmware_guest_network:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ item + '-SA-KMS-01' }}"
+      label: "Network adapter 1"
+      network_name: "{{ item + '-SA-Mgmt' }}"
+      state: present
+      force: yes
+    loop:
+      - S00
+      - S01
+      - S02
+      - S03
+      - S04
+      - S05
+      - S06
+      - S07
+      - S08
+      - S09
+      - S10
+      - S11
+      - S12
+      - S13
+delegate_to: localhost
