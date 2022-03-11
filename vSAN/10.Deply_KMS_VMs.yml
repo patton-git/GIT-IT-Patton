@@ -21,7 +21,7 @@
       password: "{{ vcenter_password }}"
       validate_certs: no
       name: "{{ item.vm_name + '-SA-KMS-01' }}"
-      state: "poweredon"
+      state: "poweredoff"
       datacenter: '{{ datacenter_name }}'
       folder: "{{ full_folder_prefix + item.vm_name }}"
       esxi_hostname: '{{ item.esxi_host }}'
