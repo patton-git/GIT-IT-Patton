@@ -40,9 +40,9 @@
           portgroup: "{{ student_ID + '-Trunk' }}"
           vlan_id: 4095
           security:
-              promiscuous_mode: True
-              mac_changes: True
-              forged_transmits: True
+            promiscuous_mode: True
+            mac_changes: True
+            forged_transmits: True
       delegate_to: localhost
 
     - name: Adding Site A Management Portgroup
@@ -56,9 +56,9 @@
           portgroup: "{{ student_ID + '-Mgmt' }}"
           vlan_id: 101
           security:
-              promiscuous_mode: True
-              mac_changes: True
-              forged_transmits: True
+            promiscuous_mode: True
+            mac_changes: True
+            forged_transmits: True
       delegate_to: localhost
 
     - name: Adding Site A Storage Portgroup
@@ -71,6 +71,9 @@
           switch: "{{ student_ID }}"
           portgroup: "{{ student_ID + '-Storage' }}"
           vlan_id: 102
+            promiscuous_mode: True
+            mac_changes: True
+            forged_transmits: True
       delegate_to: localhost
 
     - name: Adding Site A vMotion Portgroup
@@ -83,4 +86,7 @@
           switch: "{{ student_ID }}"
           portgroup: "{{ student_ID + '-vMotion' }}"
           vlan_id: 103
+            promiscuous_mode: True
+            mac_changes: True
+            forged_transmits: True
       delegate_to: localhost
