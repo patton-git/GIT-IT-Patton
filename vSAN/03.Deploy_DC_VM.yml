@@ -42,12 +42,12 @@
       linked_clone: True
       snapshot_src: "{{ snapshot_src_name }}"
       networks:
-      - name: "{{ student_ID + '-Mgmt' }}"
+      - name: "{{ student_ID + '-SA-Mgmt' }}"
         connected: True
         start_connected: True
-        ip: 10.10.1.2
+        ip: 10.10.10.2
         netmask: 255.255.255.0
-        gateway: 10.10.1.1
+        gateway: 10.10.10.1
         dns_servers: 172.0.10.2
         type: static
       customization:
