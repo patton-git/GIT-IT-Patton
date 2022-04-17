@@ -1,5 +1,6 @@
 ---
-- hosts: localhost
+- name: Prepare Domain Controller
+  hosts: localhost
   vars:
     ansible_python_interpreter: /bin/python3
     vcenter_hostname: "172.0.10.10"
@@ -7,13 +8,22 @@
     vcenter_password: "VMware1!"
     datacenter_name: "vSAN Datacenter"
     cluster_name: "vSAN Cluster"
-    esxi_hostname: "172.0.10.13"
-    student_ID: "S13"
+#    esxi_hostname: "172.0.10.13"
+#    student_ID: "S13"
     datastore_name: "vsanDatastore"
     template_name: "Win2019"
     snapshot_src_name: "Before_DC"
     folder_prefix: "1.Internal-Education/Students/"
     full_folder_prefix: "vSAN Datacenter/vm/1.Internal-Education/Students/"
+
+  vars_prompt:
+    - name: student_ID
+      prompt: What is your student ID (ex:S00)?
+      private: no
+
+    - name: esxi_hostname
+      prompt: What is your esxi_hostname (ex:172.0.10.11, 172.0.10.12, 172.0.10.13)?
+      private: no
 
   tasks:
   - name: Deploy Domain Controller VM from Template
@@ -43,8 +53,19 @@
       customization:
         password: VMware1!
       wait_for_customization: yes
-      wait_for_customization_timeout: 900
+      wait_for_customization_timeout: 300
     delegate_to: localhost
+
+  - name: Perform vMotion of virtual machine
+    community.vmware.vmware_vmotion:
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      validate_certs: no
+      vm_name: "{{ student_ID + '-DC' }}"
+      destination_host: "{{ esxi_hostname }}"
+    delegate_to: localhost
+
 
   - name: shutdown VM to change network connection
     community.vmware.vmware_guest:
