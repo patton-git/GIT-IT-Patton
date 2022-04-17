@@ -8,13 +8,18 @@
     datacenter_name: "vSAN Datacenter"
     cluster_name: "vSAN Cluster"
     esxi_hostname: "172.0.10.13"
-    student_ID: "S13"
+#    student_ID: "S13"
     datastore_name: "vsanDatastore"
     template_name: "Win2019"
     snapshot_src_name: "IaC"
     folder_prefix: "1.Internal-Education/Students/"
     full_folder_prefix: "vSAN Datacenter/vm/1.Internal-Education/Students/"
 
+  vars_promot:
+    - name: student_ID
+      prompt: What is your student ID (ex:S00)?
+      private: no
+      
   tasks:
   - name: Create a sub folder under VM folder on given datacenter
     community.vmware.vcenter_folder:
