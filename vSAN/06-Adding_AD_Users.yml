@@ -32,8 +32,8 @@
         vm_username: 'Administrator'
         vm_password: 'VMware1!'
         copy:
-            src: "/mnt/c/ansible/07-Add_AD_Users.ps1"
-            dest: "c:\\Material\\07-Add_AD_Users.ps1"
+            src: "/mnt/c/ansible/06-Add_AD_Users.ps1"
+            dest: "c:\\Material\\06-Add_AD_Users.ps1"
             overwrite: true
       delegate_to: localhost
 
@@ -49,24 +49,8 @@
         vm_username: 'Administrator'
         vm_password: 'VMware1!'
         vm_shell: 'c:\windows\system32\windowspowershell\v1.0\powershell.exe'
-        vm_shell_args: '-command "(c:\Material\07-Add_AD_Users.ps1)"'
+        vm_shell_args: '-command "(c:\Material\06-Add_AD_Users.ps1)"'
         vm_shell_cwd: 'c:\Users\Administrator'
         wait_for_process: True
         timeout: 60
-      delegate_to: localhost
-
-    - name: Delete copied powershell script
-      community.vmware.vmware_vm_shell:
-        hostname: '{{ vcenter_hostname }}'
-        username: '{{ vcenter_username }}'
-        password: '{{ vcenter_password }}'
-        validate_certs: 'false'
-        vm_id: "{{ student_ID + '-DC' }}"
-        vm_id_type: vm_name
-        vm_username: 'Administrator'
-        vm_password: 'VMware1!'
-        vm_shell: 'c:\windows\system32\windowspowershell\v1.0\powershell.exe'
-        vm_shell_args: '-command "(Remove-Item -path c:\Material\07-Add_AD_Users.ps1)"'
-        vm_shell_cwd: 'c:\Users\Administrator'
-        wait_for_process: True
       delegate_to: localhost
