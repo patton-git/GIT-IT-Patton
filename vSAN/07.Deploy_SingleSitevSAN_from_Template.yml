@@ -19,7 +19,10 @@
     - name: student_ID
       prompt: What is your student ID (ex:S00)?
       private: no
-
+    - name: esxi_hostname
+      prompt: What is your esxi_hostname (ex:172.0.10.13)?
+      private: no
+      
   tasks: 
   - name: Clone multiple esxi vms from Template
     community.vmware.vmware_guest:
