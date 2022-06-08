@@ -19,9 +19,6 @@
     - name: student_ID
       prompt: What is your student ID (ex:S00)?
       private: no
-    - name: esxi_hostname
-      prompt: What is your esxi_hostname (ex:172.0.10.13)?
-      private: no
 
   tasks: 
   - name: Clone multiple esxi vms from Template
@@ -149,7 +146,7 @@
       password: '{{ vcenter_password }}'
       validate_certs: 'false'
       datacenter: '{{ datacenter_name }}'
-      folder: "{{ full_folder_prefix }}"
+      folder: "{{ full_folder_prefix + student_ID }}"
       vm_id: "{{ item.vm_name }}"
       vm_id_type: vm_name
       vm_username: 'root'
