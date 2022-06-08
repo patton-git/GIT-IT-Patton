@@ -157,16 +157,16 @@
       vm_shell: /bin/sh
       vm_shell_cwd: "/tmp"
       vm_shell_args: |
-        echo ---- Don't remove this line. Write your ESXi configuration commands below. ----
+        echo "Don't remove this line. Write your ESXi configuration commands below."
         esxcli system settings advanced set -o /Net/FollowHardwareMac -i 1
         sed -i 's#/system/uuid.*##' /etc/vmware/esx.conf
         esxcli network vswitch standard uplink add -u vmnic1 -v vSwitch0
         esxcli network vswitch standard portgroup set -p 'Management Network' -v 10
         esxcli network vswitch standard portgroup set -p 'VM Network' -v 10
-        esxcli network ip interface ipv4 set -i vmk0 -t static -I '{{ item.ipaddr }}' -N 255.255.255.0 -g 10.10.10.1
+        esxcli network ip interface ipv4 set -i vmk0 -t static -I {{ item.ipaddr }} -N 255.255.255.0 -g 10.10.10.1
         esxcli network ip route ipv4 add -n 0.0.0.0 -g 10.10.10.1
         esxcli network ip dns server add -s 10.10.10.2
-        esxcli system hostname set --host '{{ item.host_name }}'
+        esxcli system hostname set --host {{ item.host_name }}
         esxcli system hostname set --domain vclass.local
         esxcli system ntp set -e yes -s kr.pool.ntp.org
         vim-cmd hostsvc/enable_ssh
