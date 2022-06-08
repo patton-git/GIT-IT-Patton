@@ -169,25 +169,24 @@
       vm_shell: /bin/sh
       vm_shell_cwd: "/tmp"
       vm_shell_args: |
-        echo ---- Don't remove this line. Write your ESXi configuration commands below. ----
+        echo "Don't remove this line. Write your ESXi configuration commands below."
         esxcli system settings advanced set -o /Net/FollowHardwareMac -i 1
         sed -i 's#/system/uuid.*##' /etc/vmware/esx.conf
         esxcli network vswitch standard uplink add -u vmnic1 -v vSwitch0
         esxcli network vswitch standard portgroup set -p 'Management Network' -v 10
         esxcli network vswitch standard portgroup set -p 'VM Network' -v 10
-        esxcli network ip interface ipv4 set -i vmk0 -t static -I '{{ item.ipaddr }}' -N 255.255.255.0 -g 10.10.10.1
+        esxcli network ip interface ipv4 set -i vmk0 -t static -I {{ item.ipaddr }} -N 255.255.255.0 -g 10.10.10.1
         esxcli network ip route ipv4 add -n 0.0.0.0 -g 10.10.10.1
         esxcli network ip dns server add -s 10.10.10.2
-        esxcli system hostname set --host '{{ item.host_name }}'
+        esxcli system hostname set --host {{ item.host_name }}
         esxcli system hostname set --domain vclass.local
-        /sbin/generate-certificates
         esxcli system ntp set -e yes -s kr.pool.ntp.org
         vim-cmd hostsvc/enable_ssh
-        vim_cmd hostsvc/enable_esx_shell
-        vim_cmd hostsvc/advopt/update UserVars.SuppressShellWarning long 1
+        vim-cmd hostsvc/enable_esx_shell
+        vim-cmd hostsvc/advopt/update UserVars.SuppressShellWarning long 1
+        /sbin/generate-certificates
         /sbin/auto-backup.sh
       wait_for_process: True
-      timeout: 180
     with_items:
     - { vm_name: "{{student_ID+'-SA-ESXi-01'}}", host_name: sa-esxi-01, ipaddr: 10.10.10.11 }
     - { vm_name: "{{student_ID+'-SA-ESXi-02'}}", host_name: sa-esxi-02, ipaddr: 10.10.10.12 }
@@ -211,25 +210,24 @@
       vm_shell: /bin/sh
       vm_shell_cwd: "/tmp"
       vm_shell_args: |
-         echo ---- Don't remove this line. Write your ESXi configuration commands below. ----
+        echo "Don't remove this line. Write your ESXi configuration commands below."
         esxcli system settings advanced set -o /Net/FollowHardwareMac -i 1
         sed -i 's#/system/uuid.*##' /etc/vmware/esx.conf
         esxcli network vswitch standard uplink add -u vmnic1 -v vSwitch0
         esxcli network vswitch standard portgroup set -p 'Management Network' -v 110
         esxcli network vswitch standard portgroup set -p 'VM Network' -v 10
-        esxcli network ip interface ipv4 set -i vmk0 -t static -I '{{ item.ipaddr }}' -N 255.255.255.0 -g 10.10.10.1
+        esxcli network ip interface ipv4 set -i vmk0 -t static -I {{ item.ipaddr }} -N 255.255.255.0 -g 10.10.10.1
         esxcli network ip route ipv4 add -n 0.0.0.0 -g 10.10.110.1
         esxcli network ip dns server add -s 10.10.10.2
-        esxcli system hostname set --host '{{ item.host_name }}'
+        esxcli system hostname set --host {{ item.host_name }}
         esxcli system hostname set --domain vclass.local
-        /sbin/generate-certificates
         esxcli system ntp set -e yes -s kr.pool.ntp.org
         vim-cmd hostsvc/enable_ssh
-        vim_cmd hostsvc/enable_esx_shell
-        vim_cmd hostsvc/advopt/update UserVars.SuppressShellWarning long 1
+        vim-cmd hostsvc/enable_esx_shell
+        vim-cmd hostsvc/advopt/update UserVars.SuppressShellWarning long 1
+        /sbin/generate-certificates
         /sbin/auto-backup.sh
       wait_for_process: True
-      timeout: 180
     with_items:
     - { vm_name: "{{student_ID+'-SB-ESXi-01'}}", host_name: sb-esxi-01, ipaddr: 10.10.110.11 }
     - { vm_name: "{{student_ID+'-SB-ESXi-02'}}", host_name: sb-esxi-02, ipaddr: 10.10.110.12 }
