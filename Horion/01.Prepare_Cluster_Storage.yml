@@ -1,0 +1,98 @@
+---
+- name : Prepare Horizon Lab #2
+
+  hosts: localhost
+
+  vars:
+    ansible_python_interpreter: /bin/python3
+    vcenter_hostname: "10.10.10.10"
+    vcenter_username: "administrator@vsphere.local"
+    vcenter_password: "VMware1!"
+#    esxi_username: root
+#    esxi_password: VMware1!
+    datacenter_name: "GIT Education"
+    cluster_name: "Horizon"
+
+  tasks: 
+
+    - name: 01.Create Datacenter
+      community.vmware.vcenter_datacenter:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: no
+        datacenter: '{{ datacenter_name }}'
+        state: present
+      delegate_to: localhost
+
+    - name: 02.Create Cluster
+      community.vmware.vmware_cluster:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: no
+        datacenter_name: '{{ datacenter_name }}'
+        cluster_name: '{{ cluster_name }}'
+      delegate_to: localhost
+
+    - name: 03.Add ESXi Host to vCenter
+      community.vmware.vmware_host:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: no
+        datacenter_name: '{{ datacenter_name }}'
+        cluster_name: '{{ cluster_name }}'
+        esxi_hostname: '{{ item }}'
+        esxi_username: 'root'
+        esxi_password: 'VMware1!'
+        state: present
+      loop:
+        - "sa-esxi-01.vclass.local"
+        - "sa-esxi-02.vclass.local"
+        - "sa-esxi-03.vclass.local"
+      delegate_to: localhost
+
+
+    - name: 04.Enable iSCSI of ESXi
+      community.vmware.vmware_host_iscsi:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: no
+        esxi_hostname: "{{ item }}"
+        state: enabled
+      loop:
+        - "sa-esxi-01.vclass.local"
+        - "sa-esxi-02.vclass.local"
+        - "sa-esxi-03.vclass.local"
+      delegate_to: localhost
+
+    - name: 05.Add a dynamic target to iSCSI config of ESXi
+      community.vmware.vmware_host_iscsi:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: no
+        esxi_hostname: "{{ item }}"
+        iscsi_config:
+          vmhba_name: vmhba65
+          send_target:
+            address: "10.10.10.2"
+        state: present
+      loop:
+        - "sa-esxi-01.vclass.local"
+        - "sa-esxi-02.vclass.local"
+        - "sa-esxi-03.vclass.local"
+
+    - name: 06.Recan HBA for cluster
+      community.vmware.vmware_host_scanhba:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: no
+        cluster_name: '{{ cluster_name }}'
+        rescan_hba: true
+      delegate_to: localhost
+
+	  
