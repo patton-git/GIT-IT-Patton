@@ -16,7 +16,7 @@
   tasks: 
 
     - name: 01.Create Datacenter
-      community.vmware.vcenter_datacenter:
+      community.vmware.vmware_datacenter:
         hostname: '{{ vcenter_hostname }}'
         username: '{{ vcenter_username }}'
         password: '{{ vcenter_password }}'
