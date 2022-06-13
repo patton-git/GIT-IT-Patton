@@ -42,6 +42,7 @@
       register: sub_folder_creation_result
       delegate_to: localhost
 
+
     - name: 02.Create Lab Standard Switch
       community.vmware.vmware_vswitch:
         hostname: '{{ esxi_hostname }}'
@@ -120,6 +121,7 @@
           forged_transmits: True
       delegate_to: localhost
 
+
     - name: 08.Deploy VyOS Router form Template
       community.vmware.vmware_guest:
         hostname: "{{ vcenter_hostname }}"
@@ -145,7 +147,6 @@
         destination_host: "{{ esxi_hostname }}"
       delegate_to: localhost
 
-
     - name: 10.Change VyOS Router 2nd network
       community.vmware.vmware_guest_network:
         hostname: "{{ vcenter_hostname }}"
@@ -168,7 +169,6 @@
         name: "{{ student_ID + '-Router' }}"
         state: "poweredon"
       delegate_to: localhost
-
 
     - name: 12.Waiting router booting
       wait_for:
@@ -215,6 +215,7 @@
       delegate_to: localhost
       register: shell_command_with_wait_timeout
 
+
     - name: 14.Deploy Domain Controller VM from Template
       community.vmware.vmware_guest:
         hostname: "{{ vcenter_hostname }}"
@@ -255,7 +256,18 @@
         state: present
       delegate_to: localhost
 
-    - name: 17.Deploy VCSA VM from Template
+    - name: 17.Poweron Domain Controller VM
+      community.vmware.vmware_guest:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: no
+        name: "{{ student_ID + '-DC' }}"
+        state: "poweredon"
+      delegate_to: localhost
+
+
+    - name: 18.Deploy VCSA VM from Template
       community.vmware.vmware_guest:
         hostname: "{{ vcenter_hostname }}"
         username: "{{ vcenter_username }}"
@@ -272,8 +284,7 @@
         state: "poweredoff"
       delegate_to: localhost
 
-
-    - name: 18.Verify VCSA VM on Correct Host
+    - name: 19.Verify VCSA VM on Correct Host
       community.vmware.vmware_vmotion:
         hostname: '{{ vcenter_hostname }}'
         username: '{{ vcenter_username }}'
@@ -283,7 +294,7 @@
         destination_host: "{{ esxi_hostname }}"
       delegate_to: localhost
 
-    - name: 19.Change VCSA VM Network
+    - name: 20.Change VCSA VM Network
       community.vmware.vmware_guest_network:
         hostname: "{{ vcenter_hostname }}"
         username: "{{ vcenter_username }}"
@@ -296,7 +307,7 @@
         state: present
       delegate_to: localhost
 
-    - name: 20.Poweron VCSA VM
+    - name: 21.Poweron VCSA VM
       community.vmware.vmware_guest:
         hostname: "{{ vcenter_hostname }}"
         username: "{{ vcenter_username }}"
@@ -308,7 +319,7 @@
       delegate_to: localhost
 
 
-    - name: 21.Deploy multiple esxi vms from Template
+    - name: 22.Deploy multiple esxi vms from Template
       community.vmware.vmware_guest:
         hostname: "{{ vcenter_hostname }}"
         username: "{{ vcenter_username }}"
@@ -327,7 +338,21 @@
         - "{{student_ID+'-ESXi-03'}}"
       delegate_to: localhost
 
-    - name: 22.Change ESXi VMs vCPU, vRAM
+    - name: 23.Verify ESXi VM on Correct Host
+      community.vmware.vmware_vmotion:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: no
+        vm_name: "{{ item }}"
+        destination_host: "{{ esxi_hostname }}"
+      loop:
+        - "{{student_ID+'-ESXi-01'}}"
+        - "{{student_ID+'-ESXi-02'}}"
+        - "{{student_ID+'-ESXi-03'}}"
+      delegate_to: localhost
+
+    - name: 24.Change ESXi VMs vCPU, vRAM
       community.vmware.vmware_guest:
         hostname: "{{ vcenter_hostname }}"
         username: "{{ vcenter_username }}"
@@ -344,7 +369,7 @@
         - "{{student_ID+'-ESXi-03'}}"
       delegate_to: localhost
 
-    - name: 23.Change ESXi VMs Network Interfaces
+    - name: 25.Change ESXi VMs Network Interfaces
       community.vmware.vmware_guest_network:
         hostname: "{{ vcenter_hostname }}"
         username: "{{ vcenter_username }}"
@@ -360,8 +385,7 @@
         - [ "Network adapter 1", "Network adapter 2", "Network adapter 3", "Network adapter 4" ]
       delegate_to: localhost
 
-
-    - name: 24.Power on ESXi VMs
+    - name: 26.Power on ESXi VMs
       community.vmware.vmware_guest:
         hostname: "{{ vcenter_hostname }}"
         username: "{{ vcenter_username }}"
@@ -374,14 +398,13 @@
         - "{{student_ID+'-ESXi-02'}}"
         - "{{student_ID+'-ESXi-03'}}"
       delegate_to: localhost
-  
 
-    - name: 25.Waiting boot-up
+    - name: 27.Waiting boot-up
       wait_for:
         timeout: 120
       delegate_to: localhost
 
-    - name: 26.Configure ESXi VM
+    - name: 28.Configure ESXi VM
       community.vmware.vmware_vm_shell:
         hostname: '{{ vcenter_hostname }}'
         username: '{{ vcenter_username }}'
@@ -416,8 +439,7 @@
       - { vm_name: "{{student_ID+'-ESXi-02'}}", host_name: sa-esxi-02, ipaddr: 10.10.10.12 }
       - { vm_name: "{{student_ID+'-ESXi-03'}}", host_name: sa-esxi-03, ipaddr: 10.10.10.13 }
 
-
-    - name: 27.Reboot ESXi VM
+    - name: 29.Reboot ESXi VM
       community.vmware.vmware_guest_powerstate:
         hostname: "{{ vcenter_hostname }}"
         username: "{{ vcenter_username }}"
