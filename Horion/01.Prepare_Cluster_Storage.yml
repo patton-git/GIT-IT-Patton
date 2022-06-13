@@ -151,7 +151,7 @@
         portgroup_name: vMotion
         network:
           type: 'static'
-          ip_address: {{ item.vmotionip }}
+          ip_address: '{{ item.vmotionip }}'
           subnet_mask: 255.255.255.0
           default_gateway: 10.10.30.1
         state: present
