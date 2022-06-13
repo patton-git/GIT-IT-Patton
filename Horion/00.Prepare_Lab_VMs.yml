@@ -237,9 +237,21 @@
         linked_clone: True
         template: "Temp-vSAN-VCSA"
         snapshot_src: "Deployed"
-        state: "poweredon"
+        state: "poweredoff"
       delegate_to: localhost
-    
+
+
+  - name: Perform vMotion of virtual machine
+    community.vmware.vmware_vmotion:
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      validate_certs: no
+      vm_name: "{{ student_ID + '-DC' }}"
+      destination_host: "{{ esxi_hostname }}"
+    delegate_to: localhost
+
+
     - name: 15.Change VCSA VM Network
       community.vmware.vmware_guest_network:
         hostname: "{{ vcenter_hostname }}"
@@ -252,6 +264,18 @@
         label: 'Network adapter 1'
         state: present
       delegate_to: localhost
+
+  - name: Poweron DC VM
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ student_ID + '-DC' }}"
+      state: "poweredon"
+      state_change_timeout: 60
+    delegate_to: localhost
+
 
     - name: 16.Deploy multiple esxi vms from Template
       community.vmware.vmware_guest:
