@@ -126,3 +126,39 @@
         update_on_demand: true
         state: present
       delegate_to: localhost
+
+
+    - name: 09.Add vMotion Portgroup to all hosts in a cluster
+      community.vmware.vmware_portgroup:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: no
+        cluster_name: "{{ cluster_name }}"
+        switch: vSwitch0
+        portgroup: vMotion
+        vlan_id: 30
+      delegate_to: localhost
+
+    - name: 10.Add vMotion vmkernel port
+      community.vmware.vmware_vmkernel:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: no
+        esxi_hostname: '{{ item.esxi_host }}'
+        vswitch_name: vSwitch0
+        portgroup_name: vMotion
+        network:
+          type: 'static'
+          ip_address: {{ item.vmotionip }}
+          subnet_mask: 255.255.255.0
+          default_gateway: 10.10.30.1
+        state: present
+        enable_vmotion: yes
+      with_items:
+      - { esxi_host: sa-esxi-01, vmotionip: 10.10.30.11 }
+      - { esxi_host: sa-esxi-02, vmotionip: 10.10.30.12 }
+      - { esxi_host: sa-esxi-03, vmotionip: 10.10.30.13 }
+      delegate_to: localhost
+      
