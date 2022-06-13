@@ -93,7 +93,12 @@
         rescan_hba: true
       delegate_to: localhost
 
-    - name: 07.Mount iSCSI-01 datastore
+    - name: 07.Wait for complete rescan HBA
+      wait_for:
+        timeout: 10
+      delegate_to: localhost
+
+    - name: 08.Mount iSCSI-01 datastore
       community.vmware.vmware_host_datastore:
         hostname: '{{ vcenter_hostname }}'
         username: '{{ vcenter_username }}'
@@ -111,7 +116,7 @@
         - "sa-esxi-03.vclass.local"
       delegate_to: localhost
 
-    - name: 08.Create Subscribed Content Library
+    - name: 09.Create Subscribed Content Library
       community.vmware.vmware_content_library_manager:
         hostname: '{{ vcenter_hostname }}'
         username: '{{ vcenter_username }}'
@@ -128,7 +133,7 @@
       delegate_to: localhost
 
 
-    - name: 09.Add vMotion Portgroup to all hosts in a cluster
+    - name: 10.Add vMotion Portgroup to all hosts in a cluster
       community.vmware.vmware_portgroup:
         hostname: "{{ vcenter_hostname }}"
         username: "{{ vcenter_username }}"
@@ -157,8 +162,8 @@
         state: present
         enable_vmotion: yes
       with_items:
-      - { esxi_host: sa-esxi-01, vmotionip: 10.10.30.11 }
-      - { esxi_host: sa-esxi-02, vmotionip: 10.10.30.12 }
-      - { esxi_host: sa-esxi-03, vmotionip: 10.10.30.13 }
+      - { esxi_host: sa-esxi-01.vclass.local, vmotionip: 10.10.30.11 }
+      - { esxi_host: sa-esxi-02.vclass.local, vmotionip: 10.10.30.12 }
+      - { esxi_host: sa-esxi-03.vclass.local, vmotionip: 10.10.30.13 }
       delegate_to: localhost
       
