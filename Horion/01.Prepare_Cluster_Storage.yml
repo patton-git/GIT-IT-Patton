@@ -8,8 +8,6 @@
     vcenter_hostname: "10.10.10.10"
     vcenter_username: "administrator@vsphere.local"
     vcenter_password: "VMware1!"
-#    esxi_username: root
-#    esxi_password: VMware1!
     datacenter_name: "GIT Education"
     cluster_name: "Horizon"
 
@@ -95,7 +93,7 @@
         rescan_hba: true
       delegate_to: localhost
 
-    - name: 07. Create VMFS and Mount
+    - name: 07.Mount iSCSI-01 datastore
       community.vmware.vmware_host_datastore:
         hostname: '{{ vcenter_hostname }}'
         username: '{{ vcenter_username }}'
