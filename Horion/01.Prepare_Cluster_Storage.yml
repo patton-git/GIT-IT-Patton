@@ -112,4 +112,18 @@
         - "sa-esxi-03.vclass.local"
       delegate_to: localhost
 
-	  	  
+  - name: 08.Create Subscribed Content Library
+    community.vmware.vmware_content_library_manager:
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      library_name: from-vcsa.edu.git
+      library_description: 'Subscribed Library from vcsa.edu.git'
+      library_type: subscribed
+      datastore_name: datastore
+      subscription_url: 'https://vcsa.edu.git:443/cls/vcsp/lib/7423319a-76be-4c63-821f-13a57f1c042d/lib.json'
+      ssl_thumbprint: '47:86:e5:3a:f6:ac:39:1c:9b:d0:39:48:fe:79:18:c2:3f:ba:d5:20'
+      update_on_demand: true
+      state: present
+    delegate_to: localhost
+
