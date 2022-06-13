@@ -95,7 +95,7 @@
 
     - name: 07.Wait for complete rescan HBA
       wait_for:
-        timeout: 10
+        timeout: 20
       delegate_to: localhost
 
     - name: 08.Mount iSCSI-01 datastore
