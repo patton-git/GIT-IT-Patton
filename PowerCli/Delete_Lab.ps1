@@ -6,8 +6,11 @@ Connect-VIServer -Server vcsa.edu.git -Protocol https -User administrator@vspher
 ## $ID = Read-Host "Please enter your Lab or Student ID:  (ex:S00, H00)"
 $ID = 'S02'
 
+## https://developer.vmware.com/docs/powercli/latest/vmware.vimautomation.core/commands/get-folder/#Default
+## https://developer.vmware.com/docs/powercli/latest/vmware.vimautomation.core/commands/stop-vm/#Default
 Get-Folder $ID | get-vm | Where-object {$_.powerstate -eq 'poweredon'} | Stop-VM -Confirm:$false -RunAsync
 Get-Folder $ID | Remove-Folder -DeletePermanently
 
+## https://developer.vmware.com/docs/powercli/latest/vmware.vimautomation.core/commands/remove-virtualswitch/#Default
 Remove-VirtualSwitch -VirtualSwitch $ID -Confirm:$false
 
