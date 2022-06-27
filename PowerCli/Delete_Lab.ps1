@@ -14,3 +14,4 @@ Get-Folder $ID | Remove-Folder -DeletePermanently
 ## https://developer.vmware.com/docs/powercli/latest/vmware.vimautomation.core/commands/remove-virtualswitch/#Default
 Remove-VirtualSwitch -VirtualSwitch $ID -Confirm:$false
 
+Disconnect-VIServer
