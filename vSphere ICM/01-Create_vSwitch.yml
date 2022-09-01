@@ -109,7 +109,7 @@
         esxi_hostname: "{{ esxi_hostname }}"
         validate_certs: no
         switch: "{{ student_ID }}"
-        portgroup: "{{ student_ID + '-VM-Prod' }}"
+        portgroup: "{{ student_ID + '-Prod' }}"
         vlan_id: 13
         security:
           promiscuous_mode: True
