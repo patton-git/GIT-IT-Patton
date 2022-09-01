@@ -28,19 +28,30 @@ Add-DnsServerResourceRecordPtr -Name "13.10" -ZoneName "10.10.in-addr.arpa" -Ptr
 Add-DnsServerResourceRecordA -Name "sa-esxi-04" -ZoneName "vclass.local" -IPv4Address "10.10.10.14"
 Add-DnsServerResourceRecordPtr -Name "14.10" -ZoneName "10.10.in-addr.arpa" -PtrDomainName "sa-esxi-04.vclass.local"
 
-
-Add-DnsServerResourceRecordA -Name "sb-esxi-01" -ZoneName "vclass.local" -IPv4Address "10.10.110.11"
-Add-DnsServerResourceRecordPtr -Name "11.110" -ZoneName "10.10.in-addr.arpa" -PtrDomainName "sb-esxi-01.vclass.local"
-
-Add-DnsServerResourceRecordA -Name "sb-esxi-02" -ZoneName "vclass.local" -IPv4Address "10.10.110.12"
-Add-DnsServerResourceRecordPtr -Name "12.110" -ZoneName "10.10.in-addr.arpa" -PtrDomainName "sb-esxi-02.vclass.local"
-
-Add-DnsServerResourceRecordA -Name "sb-esxi-03" -ZoneName "vclass.local" -IPv4Address "10.10.110.13"
-Add-DnsServerResourceRecordPtr -Name "13.110" -ZoneName "10.10.in-addr.arpa" -PtrDomainName "sb-esxi-03.vclass.local"
-
-Add-DnsServerResourceRecordA -Name "sb-esxi-04" -ZoneName "vclass.local" -IPv4Address "10.10.110.14"
-Add-DnsServerResourceRecordPtr -Name "14.110" -ZoneName "10.10.in-addr.arpa" -PtrDomainName "sb-esxi-04.vclass.local"
+Add-DnsServerResourceRecordA -Name "sa-esxi-05" -ZoneName "vclass.local" -IPv4Address "10.10.10.15"
+Add-DnsServerResourceRecordPtr -Name "15.10" -ZoneName "10.10.in-addr.arpa" -PtrDomainName "sa-esxi-05.vclass.local"
 
 
-Add-DnsServerResourceRecordA -Name "sc-witness-01" -ZoneName "vclass.local" -IPv4Address "10.10.210.11"
-Add-DnsServerResourceRecordPtr -Name "11.210" -ZoneName "10.10.in-addr.arpa" -PtrDomainName "sc-witness-01.vclass.local"
+
+Add-DnsServerResourceRecordA -Name "sb-esxi-01" -ZoneName "vclass.local" -IPv4Address "10.10.20.11"
+Add-DnsServerResourceRecordPtr -Name "11.20" -ZoneName "10.10.in-addr.arpa" -PtrDomainName "sb-esxi-01.vclass.local"
+
+Add-DnsServerResourceRecordA -Name "sb-esxi-02" -ZoneName "vclass.local" -IPv4Address "10.10.20.12"
+Add-DnsServerResourceRecordPtr -Name "12.20" -ZoneName "10.10.in-addr.arpa" -PtrDomainName "sb-esxi-02.vclass.local"
+
+Add-DnsServerResourceRecordA -Name "sb-esxi-03" -ZoneName "vclass.local" -IPv4Address "10.10.20.13"
+Add-DnsServerResourceRecordPtr -Name "13.20" -ZoneName "10.10.in-addr.arpa" -PtrDomainName "sb-esxi-03.vclass.local"
+
+Add-DnsServerResourceRecordA -Name "sb-esxi-04" -ZoneName "vclass.local" -IPv4Address "10.10.20.14"
+Add-DnsServerResourceRecordPtr -Name "14.20" -ZoneName "10.10.in-addr.arpa" -PtrDomainName "sb-esxi-04.vclass.local"
+
+Add-DnsServerResourceRecordA -Name "sb-esxi-05" -ZoneName "vclass.local" -IPv4Address "10.10.20.15"
+Add-DnsServerResourceRecordPtr -Name "15.20" -ZoneName "10.10.in-addr.arpa" -PtrDomainName "sb-esxi-05.vclass.local"
+
+
+
+Add-DnsServerResourceRecordA -Name "sc-witness-01" -ZoneName "vclass.local" -IPv4Address "10.10.30.11"
+Add-DnsServerResourceRecordPtr -Name "11.30" -ZoneName "10.10.in-addr.arpa" -PtrDomainName "sc-witness-01.vclass.local"
+
+Add-DnsServerResourceRecordA -Name "sc-witness-02" -ZoneName "vclass.local" -IPv4Address "10.10.30.12"
+Add-DnsServerResourceRecordPtr -Name "12.30" -ZoneName "10.10.in-addr.arpa" -PtrDomainName "sc-witness-02.vclass.local"
