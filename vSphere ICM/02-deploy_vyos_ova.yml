@@ -39,26 +39,26 @@
         ovf: /mnt/c/Material/temp-vyos-1.4.ova    
       delegate_to: localhost
 
-  - name: Correct right place of Router VM using vMotion
-    community.vmware.vmware_vmotion:
-      hostname: '{{ vcenter_hostname }}'
-      username: '{{ vcenter_username }}'
-      password: '{{ vcenter_password }}'
-      validate_certs: no
-      vm_name: "{{ student_ID + '-Router' }}"
-      destination_host: "{{ esxi_hostname }}"
-    delegate_to: localhost
+    - name: Correct right place of Router VM using vMotion
+      community.vmware.vmware_vmotion:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: no
+        vm_name: "{{ student_ID + '-Router' }}"
+        destination_host: "{{ esxi_hostname }}"
+      delegate_to: localhost
 
-  - name: Poweron Student Router VM
-    community.vmware.vmware_guest:
-      hostname: "{{ vcenter_hostname }}"
-      username: "{{ vcenter_username }}"
-      password: "{{ vcenter_password }}"
-      validate_certs: no
-      name: "{{ student_ID + '-Router' }}"
-      state: "poweredon"
-      state_change_timeout: 60
-    delegate_to: localhost
+    - name: Poweron Student Router VM
+      community.vmware.vmware_guest:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: no
+        name: "{{ student_ID + '-Router' }}"
+        state: "poweredon"
+        state_change_timeout: 60
+      delegate_to: localhost
     
     - name: Waiting 60 seconds for completing bootup
       wait_for:
