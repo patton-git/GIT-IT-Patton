@@ -8,7 +8,6 @@
     vcenter_password: "VMware1!"
     datacenter_name: "Datacenter"
     cluster_name: "vSAN"
-    esxi_hostname: "172.0.10.13"
     folder_prefix: "1.Internal-Training/Students/"
     full_folder_prefix: "Datacenter/vm/1.Internal-Training/Students/"
     public_net: "DPG-172.0.10.x"
