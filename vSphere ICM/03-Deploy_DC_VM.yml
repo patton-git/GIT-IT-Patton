@@ -55,7 +55,7 @@
     delegate_to: localhost
     ignore_errors: yes
 
-  - name: remove nic with mac 00:50:56:11:22:33 from vm01.domain.fake
+  - name: Connect SA-Mgmt Network
     community.vmware.vmware_guest_network:
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
