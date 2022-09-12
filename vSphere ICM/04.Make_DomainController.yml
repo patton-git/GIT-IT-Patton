@@ -6,12 +6,12 @@
     vcenter_hostname: "172.0.10.10"
     vcenter_username: "administrator@vsphere.local"
     vcenter_password: "VMware1!"
-    datacenter_name: "vSAN Datacenter"
+    datacenter_name: "Datacenter"
 #    cluster_name: "vSAN Cluster"
 #    esxi_hostname: "172.0.10.13"
 #    student_ID: "S13"
-    folder_prefix: "1.Internal-Education/Students/"
-    full_folder_prefix: "vSAN Datacenter/vm/1.Internal-Education/Students/"
+    folder_prefix: "1.Internal-Training/Students/"
+    full_folder_prefix: "Datacenter/vm/1.Internal-Training/Students/"
 
   vars_prompt:
     - name: student_ID
@@ -76,6 +76,7 @@
         vm_shell_args: '-command "(Install-ADDSForest -CreateDnsDelegation:$false -DatabasePath C:\Windows\NTDS -DomainMode WinThreshold -DomainName vclass.local -DomainNetbiosName VCLASS -ForestMode WinThreshold -InstallDns:$true -LogPath C:\Windows\NTDS -NoRebootOnCompletion:$false -SysvolPath C:\Windows\SYSVOL -Force:$true -SafeModeAdministratorPassword (ConvertTo-SecureString -AsPlainText "VMware1!" -force)")"'
         vm_shell_cwd: 'c:\Users\Administrator'
         wait_for_process: True
-        timeout: 300
+        timeout: 600
       delegate_to: localhost
       register: shell_command_with_wait_timeout
+      ignore_errors: yes
