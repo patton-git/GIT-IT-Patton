@@ -55,35 +55,46 @@
     delegate_to: localhost
     ignore_errors: yes
 
-  - name: Perform vMotion of virtual machine
-    community.vmware.vmware_vmotion:
-      hostname: '{{ vcenter_hostname }}'
-      username: '{{ vcenter_username }}'
-      password: '{{ vcenter_password }}'
-      validate_certs: no
-      vm_name: "{{ student_ID + '-DC' }}"
-      destination_host: "{{ esxi_hostname }}"
-    delegate_to: localhost
-
-
-  - name: shutdown VM to change network connection
-    community.vmware.vmware_guest:
+  - name: remove nic with mac 00:50:56:11:22:33 from vm01.domain.fake
+    community.vmware.vmware_guest_network:
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       validate_certs: no
+      datacenter: "{{ datacenter_name }}"
       name: "{{ student_ID + '-DC' }}"
-      state: "shutdownguest"
-      state_change_timeout: 60
-    delegate_to: localhost
+      network_name: "{{ student_ID + '-Mgmt' }}"
+    delegate_to: localhost    
 
-  - name: Poweron DC VM
-    community.vmware.vmware_guest:
-      hostname: "{{ vcenter_hostname }}"
-      username: "{{ vcenter_username }}"
-      password: "{{ vcenter_password }}"
-      validate_certs: no
-      name: "{{ student_ID + '-DC' }}"
-      state: "poweredon"
-      state_change_timeout: 60
-    delegate_to: localhost
+#  - name: Perform vMotion of virtual machine
+#    community.vmware.vmware_vmotion:
+#      hostname: '{{ vcenter_hostname }}'
+#      username: '{{ vcenter_username }}'
+#      password: '{{ vcenter_password }}'
+#      validate_certs: no
+#      vm_name: "{{ student_ID + '-DC' }}"
+#      destination_host: "{{ esxi_hostname }}"
+#    delegate_to: localhost
+
+
+#  - name: shutdown VM to change network connection
+#    community.vmware.vmware_guest:
+#      hostname: "{{ vcenter_hostname }}"
+#      username: "{{ vcenter_username }}"
+#      password: "{{ vcenter_password }}"
+#      validate_certs: no
+#      name: "{{ student_ID + '-DC' }}"
+#      state: "shutdownguest"
+#      state_change_timeout: 60
+#    delegate_to: localhost
+
+#  - name: Poweron DC VM
+#    community.vmware.vmware_guest:
+#      hostname: "{{ vcenter_hostname }}"
+#      username: "{{ vcenter_username }}"
+#      password: "{{ vcenter_password }}"
+#      validate_certs: no
+#      name: "{{ student_ID + '-DC' }}"
+#      state: "poweredon"
+#      state_change_timeout: 60
+#    delegate_to: localhost
