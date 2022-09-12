@@ -50,7 +50,7 @@
         type: static
       customization:
         password: VMware1!
-      wait_for_customization: yes
+#      wait_for_customization: yes
 #      wait_for_customization_timeout: 300
     delegate_to: localhost
 
