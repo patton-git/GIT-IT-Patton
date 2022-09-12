@@ -50,9 +50,10 @@
         type: static
       customization:
         password: VMware1!
-#      wait_for_customization: yes
-#      wait_for_customization_timeout: 300
+      wait_for_customization: yes
+      wait_for_customization_timeout: 300
     delegate_to: localhost
+    ignore_errors: yes
 
   - name: Perform vMotion of virtual machine
     community.vmware.vmware_vmotion:
