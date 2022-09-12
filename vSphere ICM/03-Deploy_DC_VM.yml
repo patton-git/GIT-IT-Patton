@@ -6,15 +6,13 @@
     vcenter_hostname: "172.0.10.10"
     vcenter_username: "administrator@vsphere.local"
     vcenter_password: "VMware1!"
-    datacenter_name: "vSAN Datacenter"
-    cluster_name: "vSAN Cluster"
-#    esxi_hostname: "172.0.10.13"
-#    student_ID: "S13"
+    datacenter_name: "Datacenter"
+    cluster_name: "vSAN"
     datastore_name: "vsanDatastore"
-    template_name: "Win2019"
-    snapshot_src_name: "Before_DC"
-    folder_prefix: "1.Internal-Education/Students/"
-    full_folder_prefix: "vSAN Datacenter/vm/1.Internal-Education/Students/"
+    template_name: "Temp-WinSvr2019"
+    snapshot_src_name: "Update_202209"
+    folder_prefix: "1.Internal-Training/Students/"
+    full_folder_prefix: "Datacenter/vm/1.Internal-Training/Students/"
 
   vars_prompt:
     - name: student_ID
@@ -45,9 +43,9 @@
       - name: "{{ student_ID + '-Mgmt' }}"
         connected: True
         start_connected: True
-        ip: 10.10.1.2
+        ip: 10.10.10.2
         netmask: 255.255.255.0
-        gateway: 10.10.1.1
+        gateway: 10.10.10.1
         dns_servers: 172.0.10.2
         type: static
       customization:
