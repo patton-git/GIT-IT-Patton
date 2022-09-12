@@ -37,12 +37,12 @@
       esxi_hostname: '{{ esxi_hostname }}'
       datastore: "{{ datastore_name }}"
       template: "{{ template_name }}"
-      linked_clone: True
+      linked_clone: true
       snapshot_src: "{{ snapshot_src_name }}"
       networks:
       - name: "{{ student_ID + '-Mgmt' }}"
-        connected: True
-        start_connected: True
+        connected: true
+        start_connected: true
         ip: 10.10.10.2
         netmask: 255.255.255.0
         gateway: 10.10.10.1
@@ -64,6 +64,8 @@
       datacenter: "{{ datacenter_name }}"
       name: "{{ student_ID + '-DC' }}"
       network_name: "{{ student_ID + '-Mgmt' }}"
+      label: "Network adapter 1"
+      connected: true
     delegate_to: localhost    
 
 #  - name: Perform vMotion of virtual machine
