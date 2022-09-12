@@ -10,7 +10,7 @@
     cluster_name: "vSAN"
     datastore_name: "vsanDatastore"
     template_name: "Temp-WinSvr2019"
-    snapshot_src_name: "Update_202209"
+    snapshot_src_name: "Update-202209"
     folder_prefix: "1.Internal-Training/Students/"
     full_folder_prefix: "Datacenter/vm/1.Internal-Training/Students/"
 
