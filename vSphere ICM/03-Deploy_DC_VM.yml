@@ -9,8 +9,8 @@
     datacenter_name: "Datacenter"
     cluster_name: "vSAN"
     datastore_name: "vsanDatastore"
-    template_name: "Win-IaC"
-    snapshot_src_name: "2022-09"
+    template_name: "Temp-WinSvr2019"
+    snapshot_src_name: "Update-202209"
     folder_prefix: "1.Internal-Training/Students/"
     full_folder_prefix: "Datacenter/vm/1.Internal-Training/Students/"
 
@@ -51,7 +51,7 @@
       customization:
         password: VMware1!
       wait_for_customization: yes
-      wait_for_customization_timeout: 300
+#      wait_for_customization_timeout: 300
     delegate_to: localhost
 
   - name: Perform vMotion of virtual machine
