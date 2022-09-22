@@ -87,10 +87,9 @@
       name: "{{ item }}"
       state: "poweredon"
     loop:
-      - "{{student_ID+'-ESXi-01'}}"
-      - "{{student_ID+'-ESXi-02'}}"
-      - "{{student_ID+'-ESXi-03'}}"
-      - "{{student_ID+'-ESXi-04'}}"      
+      - "{{student_ID+'-SB-ESXi-01'}}"
+      - "{{student_ID+'-SB-ESXi-02'}}"
+      - "{{student_ID+'-SB-ESXi-03'}}"
     delegate_to: localhost
   
 
@@ -146,8 +145,7 @@
       name: "{{ item }}"
       state: reboot-guest
     loop:
-      - "{{student_ID+'-ESXi-01'}}"
-      - "{{student_ID+'-ESXi-02'}}"
-      - "{{student_ID+'-ESXi-03'}}"
-      - "{{student_ID+'-ESXi-04'}}"      
+      - "{{student_ID+'-SB-ESXi-01'}}"
+      - "{{student_ID+'-SB-ESXi-02'}}"
+      - "{{student_ID+'-SB-ESXi-03'}}"
     delegate_to: localhost
