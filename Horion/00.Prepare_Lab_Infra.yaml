@@ -340,7 +340,7 @@
         folder: "{{ folder_prefix + student_ID }}"
         esxi_hostname: '{{ esxi_hostname }}'
         datastore: "{{ datastore_name }}"
-        template: "Temp-vSAN-ESXi"
+        template: "Temp-Horizon-ESXi"
         state: "poweredoff"
       loop:
         - "{{student_ID+'-ESXi-01'}}"
