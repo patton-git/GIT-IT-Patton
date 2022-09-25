@@ -235,6 +235,7 @@
         portgroup_name: DPG-Mgmt
         switch_name: DSwitch
         vlan_id: 10
+        port_binding: static
         state: present
       delegate_to: localhost
 
@@ -247,6 +248,7 @@
         portgroup_name: DPG-vMotion
         switch_name: DSwitch
         vlan_id: 12
+        port_binding: static
         state: present
       delegate_to: localhost
 
@@ -259,6 +261,7 @@
         portgroup_name: DPG-Prod-Internal
         switch_name: DSwitch
         vlan_id: 13
+        port_binding: static
         state: present
       delegate_to: localhost
 
