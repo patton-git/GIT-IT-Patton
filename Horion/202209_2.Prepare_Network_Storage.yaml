@@ -114,7 +114,7 @@
         password: "{{ vcenter_password }}"
         validate_certs: no
         esxi_hostname: "{{ item }}"
-        state: present
+        state: enabled
       loop:
         - "sa-esxi-01.vclass.local"
         - "sa-esxi-02.vclass.local"
@@ -142,23 +142,6 @@
       delegate_to: localhost
 
 
-#    - name: 05.Add a dynamic target to iSCSI config of ESXi
-#      community.vmware.vmware_host_iscsi:
-#        hostname: "{{ vcenter_hostname }}"
-#        username: "{{ vcenter_username }}"
-#        password: "{{ vcenter_password }}"
-#        validate_certs: no
-#        esxi_hostname: "{{ item }}"
-#        iscsi_config:
-#          vmhba_name: vmhba65
-#          send_target:
-#            address: "10.10.10.2"
-#        state: present
-#      loop:
-#        - "sa-esxi-01.vclass.local"
-#        - "sa-esxi-02.vclass.local"
-#        - "sa-esxi-03.vclass.local"
-
     - name: 10.Recan HBA for cluster
       community.vmware.vmware_host_scanhba:
         hostname: '{{ vcenter_hostname }}'
@@ -169,18 +152,20 @@
         rescan_hba: true
       delegate_to: localhost
 
+
     - name: 11.Wait for complete rescan HBA
       wait_for:
         timeout: 10
       delegate_to: localhost
 
-    - name: 11.Mount iSCSI-01 datastore
+
+    - name: 12.Mount iSCSI-01 datastore
       community.vmware.vmware_host_datastore:
         hostname: '{{ vcenter_hostname }}'
         username: '{{ vcenter_username }}'
         password: '{{ vcenter_password }}'
         validate_certs: no
-        datastore_name: 'iSCSI-01'
+        datastore_name: 'iSCSI-Horizon'
         datastore_type: 'vmfs'
         vmfs_device_name: 'naa.60003fff44dc75adcba4d2507543dd621'
         vmfs_version: 6
@@ -192,7 +177,8 @@
         - "sa-esxi-03.vclass.local"
       delegate_to: localhost
 
-    - name: 12.Create Subscribed Content Library
+
+    - name: 13.Create Subscribed Content Library
       community.vmware.vmware_content_library_manager:
         hostname: '{{ vcenter_hostname }}'
         username: '{{ vcenter_username }}'
@@ -209,7 +195,7 @@
       delegate_to: localhost
 
 
-    - name: Create dvSwitch
+    - name: 14.Create dvSwitch
       community.vmware.vmware_dvswitch:
         hostname: '{{ vcenter_hostname }}'
         username: '{{ vcenter_username }}'
@@ -222,7 +208,7 @@
         state: present
       delegate_to: localhost
 
-    - name: Add Host to dVS
+    - name: 15.Add Host to dVS
       community.vmware.vmware_dvs_host:
         hostname: '{{ vcenter_hostname }}'
         username: '{{ vcenter_username }}'
@@ -239,7 +225,7 @@
         - "sa-esxi-03.vclass.local"
       delegate_to: localhost
 
-    - name: Create vlan portgroup - Mgmt - 10
+    - name: 16.Create vlan portgroup - Mgmt - 10
       community.vmware.vmware_dvs_portgroup:
         hostname: '{{ vcenter_hostname }}'
         username: '{{ vcenter_username }}'
@@ -249,7 +235,7 @@
         vlan_id: 10
       delegate_to: localhost
 
-    - name: Create vlan portgroup - vMotion - 12
+    - name: 17.Create vlan portgroup - vMotion - 12
       community.vmware.vmware_dvs_portgroup:
         hostname: '{{ vcenter_hostname }}'
         username: '{{ vcenter_username }}'
@@ -259,7 +245,7 @@
         vlan_id: 12
       delegate_to: localhost
 
-    - name: Create vlan portgroup - Production - 13
+    - name: 18.Create vlan portgroup - Production - 13
       community.vmware.vmware_dvs_portgroup:
         hostname: '{{ vcenter_hostname }}'
         username: '{{ vcenter_username }}'
@@ -270,7 +256,7 @@
       delegate_to: localhost
 
 
-    - name: 10.Add vMotion vmkernel port
+    - name: 19.Add vMotion vmkernel port
       community.vmware.vmware_vmkernel:
         hostname: '{{ vcenter_hostname }}'
         username: '{{ vcenter_username }}'
@@ -293,7 +279,7 @@
       delegate_to: localhost
 
 
-    - name: vmoption tcp/ip stack gateway
+    - name: 20.vmoption tcp/ip stack gateway
       community.vmware.vmware_host_tcpip_stacks:
         hostname: '{{ item }}'
         username: '{{ esxi_username }}'
