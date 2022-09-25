@@ -107,7 +107,22 @@
       delegate_to: localhost
       
 
-    - name: 08.Enable Software iSCSI Adapter and Port Binding and Target
+    - name: 08.Create Software iSCSI Adapter
+      community.vmware.vmware_host_iscsi:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: no
+        esxi_hostname: "{{ item }}"
+        state: present
+      loop:
+        - "sa-esxi-01.vclass.local"
+        - "sa-esxi-02.vclass.local"
+        - "sa-esxi-03.vclass.local"
+      delegate_to: localhost
+
+
+    - name: 09. Set Port Binding and Target
       community.vmware.vmware_host_iscsi:
         hostname: "{{ vcenter_hostname }}"
         username: "{{ vcenter_username }}"
@@ -144,7 +159,7 @@
 #        - "sa-esxi-02.vclass.local"
 #        - "sa-esxi-03.vclass.local"
 
-    - name: 09.Recan HBA for cluster
+    - name: 10.Recan HBA for cluster
       community.vmware.vmware_host_scanhba:
         hostname: '{{ vcenter_hostname }}'
         username: '{{ vcenter_username }}'
@@ -154,9 +169,9 @@
         rescan_hba: true
       delegate_to: localhost
 
-    - name: 10.Wait for complete rescan HBA
+    - name: 11.Wait for complete rescan HBA
       wait_for:
-        timeout: 20
+        timeout: 10
       delegate_to: localhost
 
     - name: 11.Mount iSCSI-01 datastore
