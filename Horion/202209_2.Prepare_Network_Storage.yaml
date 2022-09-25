@@ -75,17 +75,15 @@
 
     - name: 06.Adding iSCSI Portgroup
       community.vmware.vmware_portgroup:
-        hostname: '{{ item }}'
-        username: '{{ esxi_username }}'
-        password: '{{ esxi_password }}'
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
         validate_certs: no
+        cluster_name: "{{ cluster_name }}"
         switch: vSwitch1
         portgroup: iSCSI
-      loop:
-        - "sa-esxi-01.vclass.local"
-        - "sa-esxi-02.vclass.local"
-        - "sa-esxi-03.vclass.local"
-      delegate_to: localhost      
+      delegate_to: localhost
+
 
     - name: 07.Add iSCSI vmkernel port
       community.vmware.vmware_vmkernel:
@@ -256,18 +254,6 @@
         vlan_id: 13
       delegate_to: localhost
 
-
-#    - name: 10.Add vMotion Portgroup to all hosts in a cluster
-#      community.vmware.vmware_portgroup:
-#        hostname: "{{ vcenter_hostname }}"
-#        username: "{{ vcenter_username }}"
-#        password: "{{ vcenter_password }}"
-#        validate_certs: no
-#        cluster_name: "{{ cluster_name }}"
-#        switch: vSwitch0
-#        portgroup: vMotion
-#        vlan_id: 30
-#      delegate_to: localhost
 
     - name: 10.Add vMotion vmkernel port
       community.vmware.vmware_vmkernel:
