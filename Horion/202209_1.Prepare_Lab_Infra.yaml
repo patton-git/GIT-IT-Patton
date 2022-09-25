@@ -439,6 +439,7 @@
         vm_shell: /bin/sh
         vm_shell_cwd: "/tmp"
         vm_shell_args: |
+          echo "Don't remove this line. Write your ESXi configuration commands below."        
           esxcli system settings advanced set -o /Net/FollowHardwareMac -i 1
           sed -i 's#/system/uuid.*##' /etc/vmware/esx.conf
           esxcli network ip interface ipv4 set -i=vmk0 -t=static -I='{{ item.ipaddr }}' -N=255.255.255.0 -g=10.10.10.1
