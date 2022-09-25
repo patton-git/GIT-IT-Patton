@@ -36,8 +36,8 @@
         validate_certs: no
         datacenter: '{{ datacenter_name }}'
         folder_type: vm
+        parent_folder: '1.Internal-Training/3.Horizon/'        
         folder_name: '{{ student_ID }}'
-        parent_folder: '{{ folder_prefix }}'
         state: present
       register: sub_folder_creation_result
       delegate_to: localhost
