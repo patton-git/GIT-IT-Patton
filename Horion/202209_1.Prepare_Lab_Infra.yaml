@@ -13,7 +13,7 @@
     datacenter_name: "Datacenter"
     cluster_name: "vSAN"
     datastore_name: "vsanDatastore"    
-    folder_prefix: "Datacenter/vm/1.Internal-Training/Horizon/"
+    folder_prefix: "Datacenter/vm/1.Internal-Training/3.Horizon/"
     public_net: "DPG-172.0.10.x"
     private_net: "{{ student_ID + '-Trunk' }}"    
 
