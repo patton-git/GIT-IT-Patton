@@ -10,6 +10,8 @@
     vcenter_password: "VMware1!"
     datacenter_name: "GIT Education"
     cluster_name: "Horizon"
+    esxi_username: "root"
+    esxi_password: "VMware1!"
 
   tasks: 
 
@@ -186,9 +188,9 @@
         library_name: from-vcsa.edu.git
         library_description: 'Subscribed Library from vcsa.edu.git'
         library_type: subscribed
-        datastore_name: iSCSI-01
-        subscription_url: 'https://vcsa.edu.git:443/cls/vcsp/lib/7423319a-76be-4c63-821f-13a57f1c042d/lib.json'
-        ssl_thumbprint: '47:86:e5:3a:f6:ac:39:1c:9b:d0:39:48:fe:79:18:c2:3f:ba:d5:20'
+        datastore_name: iSCSI-Horizon
+        subscription_url: 'https://vcsa.edu.git:443/cls/vcsp/lib/8abf3e66-df94-4abd-9b6f-9ae81b54110b/lib.json'
+        ssl_thumbprint: 'F2:4B:22:E2:AF:F0:69:70:44:76:9C:70:49:5C:C8:1C:26:26:3D:D8'
         update_on_demand: true
         state: present
       delegate_to: localhost
