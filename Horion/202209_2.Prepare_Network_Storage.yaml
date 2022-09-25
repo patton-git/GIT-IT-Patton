@@ -235,6 +235,7 @@
         portgroup_name: DPG-Mgmt
         switch_name: DSwitch
         vlan_id: 10
+        state: present
       delegate_to: localhost
 
     - name: 17.Create vlan portgroup - vMotion - 12
@@ -246,6 +247,7 @@
         portgroup_name: DPG-vMotion
         switch_name: DSwitch
         vlan_id: 12
+        state: present
       delegate_to: localhost
 
     - name: 18.Create vlan portgroup - Production - 13
@@ -257,6 +259,7 @@
         portgroup_name: DPG-Prod-Internal
         switch_name: DSwitch
         vlan_id: 13
+        state: present
       delegate_to: localhost
 
 
