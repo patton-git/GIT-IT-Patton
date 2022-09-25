@@ -167,7 +167,7 @@
         validate_certs: no
         datastore_name: 'iSCSI-Horizon'
         datastore_type: 'vmfs'
-        vmfs_device_name: 'naa.60003fff44dc75adcba4d2507543dd621'
+        vmfs_device_name: 'naa.60003ff44dc75adc881b96b330bc1bdc'
         vmfs_version: 6
         esxi_hostname: '{{ item }}'
         state: present
