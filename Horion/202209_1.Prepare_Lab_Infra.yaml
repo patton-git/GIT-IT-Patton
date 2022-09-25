@@ -129,7 +129,7 @@
         esxi_hostname: "{{ esxi_hostname }}"
         validate_certs: no
         switch: "{{ student_ID }}"
-        portgroup: "{{ student_ID + '-vMotion' }}"
+        portgroup: "{{ student_ID + '-Prod' }}"
         vlan_id: 13
         security:
           promiscuous_mode: True
@@ -236,10 +236,9 @@
         esxi_hostname: '{{ esxi_hostname }}'
         datastore: "{{ datastore_name }}"
         linked_clone: True
-        template: "dc.vclass.local"
+#        template: "dc.vclass.local"
         snapshot_src: "202209"
-#        template: "Temp-Horizon-DC"
-#        snapshot_src: "20220611"
+        template: "Temp-Horizon-DC"
       delegate_to: localhost
       
     - name: 15.Verify Domain Controller VM on Correct Host
@@ -260,10 +259,19 @@
         validate_certs: no
         datacenter: "{{ datacenter_name }}"
         name: "{{ student_ID + '-DC' }}"
-        network_name: "{{ student_ID + '-Mgmt' }}"
-        label: 'Network adapter 1'
-        state: present
+        networks:
+          - label: "Network adapter 1"
+            name: "{{ student_ID + '-Mgmt' }}"
+            state: present
+            connected: yes
+            start_connected: yes
+          - label: "Network adapter 2"
+            name: "{{ student_ID + '-Storage' }}"
+            state: present
+            connected: yes
+            start_connected: yes               
       delegate_to: localhost
+
 
     - name: 17.Poweron Domain Controller VM
       community.vmware.vmware_guest:
@@ -290,7 +298,6 @@
         linked_clone: True
         template: "sa-vcsa-01.vclass.local"
         snapshot_src: "Deployed"
-#        template: "Temp-vSAN-VCSA"
         state: "poweredoff"
       delegate_to: localhost
 
@@ -434,7 +441,6 @@
         vm_shell_args: |
           esxcli system settings advanced set -o /Net/FollowHardwareMac -i 1
           sed -i 's#/system/uuid.*##' /etc/vmware/esx.conf
-#          esxcli network vswitch standard portgroup set -p='Management Network' -v=10
           esxcli network ip interface ipv4 set -i=vmk0 -t=static -I='{{ item.ipaddr }}' -N=255.255.255.0 -g=10.10.10.1
           esxcli network ip route ipv4 add -n 0.0.0.0 -g 10.10.10.1
           esxcli network ip dns server add -s 10.10.10.2
