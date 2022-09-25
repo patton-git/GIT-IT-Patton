@@ -213,6 +213,7 @@
         hostname: '{{ vcenter_hostname }}'
         username: '{{ vcenter_username }}'
         password: '{{ vcenter_password }}'
+        validate_certs: no        
         esxi_hostname: '{{ item }}'
         switch_name: DSwitch
         vmnics:
@@ -230,6 +231,7 @@
         hostname: '{{ vcenter_hostname }}'
         username: '{{ vcenter_username }}'
         password: '{{ vcenter_password }}'
+        validate_certs: no        
         portgroup_name: DPG-Mgmt
         switch_name: DSwitch
         vlan_id: 10
@@ -240,6 +242,7 @@
         hostname: '{{ vcenter_hostname }}'
         username: '{{ vcenter_username }}'
         password: '{{ vcenter_password }}'
+        validate_certs: no        
         portgroup_name: DPG-vMotion
         switch_name: DSwitch
         vlan_id: 12
@@ -250,6 +253,7 @@
         hostname: '{{ vcenter_hostname }}'
         username: '{{ vcenter_username }}'
         password: '{{ vcenter_password }}'
+        validate_certs: no        
         portgroup_name: DPG-Prod-Internal
         switch_name: DSwitch
         vlan_id: 13
