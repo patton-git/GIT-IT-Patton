@@ -1,3 +1,6 @@
+# https://cloud-images.ubuntu.com/focal/current/
+# https://docs.ansible.com/ansible/latest/collections/community/vmware/vmware_guest_module.html      
+
 ---
 - name : Deploy Ubuntu VM using Cloud Image OVA
   hosts: localhost
@@ -19,7 +22,6 @@
   tasks: 
     - name: Deploy Ubuntu VM using Cloud Image OVA
       community.vmware.vmware_guest:
-# https://docs.ansible.com/ansible/latest/collections/community/vmware/vmware_guest_module.html      
         hostname: "{{ vcenter_hostname }}"
         username: "{{ vcenter_username }}"
         password: "{{ vcenter_password }}"
@@ -47,4 +49,5 @@
             type: string
             value: VMware1!
       delegate_to: localhost
+      
       
