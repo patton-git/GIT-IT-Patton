@@ -1,0 +1,50 @@
+---
+- name : Deploy Ubuntu VM using Cloud Image OVA
+  hosts: localhost
+  vars:
+    ansible_python_interpreter: /bin/python3
+    vcenter_hostname: "172.0.10.10"
+    vcenter_username: "administrator@vsphere.local"
+    vcenter_password: "VMware1!"
+    esxi_username: root
+    esxi_password: VMware1!
+    datacenter_name: "Datacenter"
+    cluster_name: "vSAN"
+    datastore_name: "vsanDatastore"    
+    folder_prefix: "Datacenter/vm/1.Internal-Training/4.CKA/"
+    
+    student_ID: "S00"
+    esxi_hostname: "172.0.10.13"
+
+  tasks: 
+    - name: Deploy Ubuntu VM using Cloud Image OVA
+      community.vmware.vmware_guest:
+# https://docs.ansible.com/ansible/latest/collections/community/vmware/vmware_guest_module.html      
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: no
+        name: "{{ student_ID + '-K8s-Master' }}"
+        datacenter: '{{ datacenter_name }}'
+        folder: "{{ folder_prefix}}"
+        esxi_hostname: '{{ esxi_hostname }}'
+        datastore: "{{ datastore_name }}"
+        linked_clone: False
+        template: "Temp-Ubuntu-Server-20.04"
+        networks:
+          - name: DPG-172.0.10.x
+            ip: 192.168.10.12
+            netmask: 255.255.255.0
+        wait_for_ip_address: True
+        customization:
+          dns_servers:
+            - 8.8.8.8
+        vapp_properties:
+          - id: hostname
+            type: string
+            value: k8s-master
+          - id: password
+            type: string
+            value: VMware1!
+      delegate_to: localhost
+      
