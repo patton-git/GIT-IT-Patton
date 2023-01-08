@@ -41,6 +41,7 @@
       snapshot_src: "{{ snapshot_src_name }}"
       networks:
       - name: "{{ student_ID + '-Mgmt' }}"
+        label: "Network adapter 1"
         connected: true
         start_connected: true
         ip: 10.10.10.2
