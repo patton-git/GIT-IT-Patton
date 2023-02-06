@@ -34,7 +34,7 @@
           name: "{{ student_ID + '-Router' }}"
           networks: { 'DPG-172.0.10.x': "DPG-172.0.10.x", 'DPG-172.0.20.x': "{{ student_ID + '-Trunk' }}" }
           power_on: yes
-          ovf: /mnt/c/temp-vyos-1.4.ova    
+          ovf: /mnt/c/Material/temp-vyos-1.4.ova    
       delegate_to: localhost
 
 
