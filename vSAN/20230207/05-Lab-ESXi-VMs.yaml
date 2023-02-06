@@ -162,9 +162,9 @@
         /sbin/auto-backup.sh
       wait_for_process: True
     with_items:
-    - { vm_name: "{{student_ID+'-SB-ESXi-01'}}", host_name: sb-esxi-01, ipaddr: 10.10.110.11 }
-    - { vm_name: "{{student_ID+'-SB-ESXi-02'}}", host_name: sb-esxi-02, ipaddr: 10.10.110.12 }
-    - { vm_name: "{{student_ID+'-SB-ESXi-03'}}", host_name: sb-esxi-03, ipaddr: 10.10.110.13 }
+    - { vm_name: "{{student_ID+'-SB-ESXi-01'}}", host_name: sb-esxi-01, ipaddr: 10.10.20.11 }
+    - { vm_name: "{{student_ID+'-SB-ESXi-02'}}", host_name: sb-esxi-02, ipaddr: 10.10.20.12 }
+    - { vm_name: "{{student_ID+'-SB-ESXi-03'}}", host_name: sb-esxi-03, ipaddr: 10.10.20.13 }
 
 
   - name: Reboot ESXi VM
