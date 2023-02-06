@@ -59,7 +59,7 @@
       state: present
       force: yes
     with_nested:
-      - [ "{{student_ID+'-SA-ESXi-01'}}", "{{student_ID+'-SA-ESXi-02'}}", "{{student_ID+'-SA-ESXi-03'}}", "{{student_ID+'-SA-ESXi-04'}}", "{{student_ID+'-SB-ESXi-01'}}", "{{student_ID+'-SB-ESXi-02'}}", "{{student_ID+'-SB-ESXi-03'}}", "{{student_ID+'-SB-ESXi-04'}}" ]
+      - [ "{{student_ID+'-SA-ESXi-01'}}", "{{student_ID+'-SA-ESXi-02'}}", "{{student_ID+'-SA-ESXi-03'}}", "{{student_ID+'-SB-ESXi-01'}}", "{{student_ID+'-SB-ESXi-02'}}", "{{student_ID+'-SB-ESXi-03'}}" ]
       - [ "Network adapter 1", "Network adapter 2", "Network adapter 3", "Network adapter 4" ]
     delegate_to: localhost
 
