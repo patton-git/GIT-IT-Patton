@@ -1,0 +1,79 @@
+---
+- name: Prepare Domain Controller
+  hosts: localhost
+  vars:
+    ansible_python_interpreter: /bin/python3
+    vcenter_hostname: "172.0.10.10"
+    vcenter_username: "administrator@vsphere.local"
+    vcenter_password: "VMware1!"
+    datacenter_name: "Datacenter"
+    cluster_name: "vSAN"
+    datastore_name: "vsanDatastore"
+    template_name: "Temp-vSAN-DC"
+    snapshot_src_name: "202301"
+    full_folder_prefix: "Datacenter/vm/1.Internal-Training/Students/"
+
+  vars_prompt:
+    - name: student_ID
+      prompt: What is your student ID (ex:S00)?
+      private: no
+
+    - name: esxi_hostname
+      prompt: What is your esxi_hostname (ex:172.0.10.11, 172.0.10.12, 172.0.10.13)?
+      private: no
+
+  tasks:
+  - name: Deploy Domain Controller VM from Template
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ student_ID + '-DC' }}"
+      state: "poweredon"
+      datacenter: '{{ datacenter_name }}'
+      folder: "{{ full_folder_prefix + student_ID }}"
+      esxi_hostname: '{{ esxi_hostname }}'
+      datastore: "{{ datastore_name }}"
+      template: "{{ template_name }}"
+      linked_clone: True
+      snapshot_src: "{{ snapshot_src_name }}"
+      networks:
+      - name: "{{ student_ID + '-SA-Mgmt' }}"
+        label: "Network adapter 1"
+        connected: True
+        start_connected: True
+    delegate_to: localhost
+
+#  - name: Perform vMotion of virtual machine
+#    community.vmware.vmware_vmotion:
+#      hostname: '{{ vcenter_hostname }}'
+#      username: '{{ vcenter_username }}'
+#      password: '{{ vcenter_password }}'
+#      validate_certs: no
+#      vm_name: "{{ student_ID + '-DC' }}"
+#      destination_host: "{{ esxi_hostname }}"
+#    delegate_to: localhost
+
+
+#  - name: shutdown VM to change network connection
+#    community.vmware.vmware_guest:
+#      hostname: "{{ vcenter_hostname }}"
+#      username: "{{ vcenter_username }}"
+#      password: "{{ vcenter_password }}"
+#      validate_certs: no
+#      name: "{{ student_ID + '-DC' }}"
+#      state: "shutdownguest"
+#      state_change_timeout: 60
+#    delegate_to: localhost
+
+#  - name: Poweron DC VM
+#    community.vmware.vmware_guest:
+#      hostname: "{{ vcenter_hostname }}"
+#      username: "{{ vcenter_username }}"
+#      password: "{{ vcenter_password }}"
+#      validate_certs: no
+#      name: "{{ student_ID + '-DC' }}"
+#      state: "poweredon"
+#      state_change_timeout: 60
+#    delegate_to: localhost
