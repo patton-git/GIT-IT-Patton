@@ -1,0 +1,75 @@
+---
+- hosts: localhost
+  vars:
+    ansible_python_interpreter: /bin/python3
+    vcenter_hostname: "172.0.10.10"
+    vcenter_username: "administrator@vsphere.local"
+    vcenter_password: "VMware1!"
+    datacenter_name: "Datacenter"
+    cluster_name: "vSAN"
+    datastore_name: "vsanDatastore"
+    template_name: "Temp-vSAN-KMS"
+    snapshot_src_name: "vmwkmip"
+    full_folder_prefix: "Datacenter/vm/1.Internal-Training/Students/"
+
+  vars_prompt:
+    - name: student_ID
+      prompt: What is your student ID (ex:S00)?
+      private: no
+
+    - name: esxi_hostname
+      prompt: What is your esxi_hostname (ex:172.0.10.11, 172.0.10.12, 172.0.10.13)?
+      private: no
+
+  tasks:
+  - name: Deploy KMS VM from Template
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ student_ID + '-SA-KMS-01' }}"
+      state: "poweredoff"
+      datacenter: '{{ datacenter_name }}'
+      folder: "{{ full_folder_prefix + student_ID }}"
+      esxi_hostname: '{{ esxi_hostname }}'
+      datastore: "{{ datastore_name }}"
+      template: "{{ template_name }}"
+      linked_clone: True
+      snapshot_src: "{{ snapshot_src_name }}"
+    delegate_to: localhost
+
+  - name: Verify KMS VM on Correct Host
+    community.vmware.vmware_vmotion:
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      validate_certs: no
+      vm_name: "{{ student_ID + '-SA-KMS-01' }}"
+      destination_host: "{{ esxi_hostname }}"
+    delegate_to: localhost
+
+  - name: Change Network Interfaces
+    community.vmware.vmware_guest_network:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ item + '-SA-KMS-01' }}"
+      label: "Network adapter 1"
+      network_name: "{{ item + '-SA-Mgmt' }}"
+      state: present
+      force: yes
+    delegate_to: localhost
+
+  - name: Poweron KMS VM
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ student_ID + '-SA-KMS-01' }}"
+      state: "poweredon"
+      state_change_timeout: 60
+    delegate_to: localhost
+
