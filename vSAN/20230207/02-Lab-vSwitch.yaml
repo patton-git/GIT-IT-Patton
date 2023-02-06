@@ -1,0 +1,217 @@
+---
+- hosts: localhost
+  vars:
+    ansible_python_interpreter: /bin/python3
+    vcenter_hostname: "172.0.10.10"
+    vcenter_username: "administrator@vsphere.local"
+    vcenter_password: "VMware1!"
+    datacenter_name: "vSAN Datacenter"
+    cluster_name: "vSAN Cluster"
+    esxi_username: "root"
+    esxi_password: "VMware1!"
+#    student_ID: "S13"
+#    esxi_hostname: "172.0.10.13"
+
+  vars_prompt:
+    - name: student_ID
+      prompt: What is your student ID (ex:S00)?
+      private: no
+
+    - name: esxi_hostname
+      prompt: What is your esxi_hostname (ex:172.0.10.13)?
+      private: no
+
+
+  tasks: 
+    - name: Create Lab Standard Switch
+      community.vmware.vmware_vswitch:
+          hostname: '{{ esxi_hostname }}'
+          username: '{{ esxi_username }}'
+          password: '{{ esxi_password }}'
+          validate_certs: no
+          switch: '{{ student_ID }}'
+      delegate_to: localhost
+
+
+    - name: Waiting 10 seconds for completing switch
+      wait_for:
+        timeout: 10
+      delegate_to: localhost
+
+
+    - name: Adding Site A Management Portgroup
+      community.vmware.vmware_portgroup:
+          hostname: "{{ vcenter_hostname }}"
+          username: "{{ vcenter_username }}"
+          password: "{{ vcenter_password }}"
+          esxi_hostname: "{{ esxi_hostname }}"
+          validate_certs: no
+          switch: "{{ student_ID }}"
+          portgroup: "{{ student_ID + '-SA-Mgmt' }}"
+          vlan_id: 10
+          security:
+              promiscuous_mode: True
+              mac_changes: True
+              forged_transmits: True
+      delegate_to: localhost
+
+    - name: Adding Site A Storage Portgroup
+      community.vmware.vmware_portgroup:
+          hostname: "{{ vcenter_hostname }}"
+          username: "{{ vcenter_username }}"
+          password: "{{ vcenter_password }}"
+          esxi_hostname: "{{ esxi_hostname }}"
+          validate_certs: no
+          switch: "{{ student_ID }}"
+          portgroup: "{{ student_ID + '-SA-Storage' }}"
+          security:
+              promiscuous_mode: True
+              mac_changes: True
+              forged_transmits: True
+          vlan_id: 11
+      delegate_to: localhost
+
+    - name: Adding Site A vMotion Portgroup
+      community.vmware.vmware_portgroup:
+          hostname: "{{ vcenter_hostname }}"
+          username: "{{ vcenter_username }}"
+          password: "{{ vcenter_password }}"
+          esxi_hostname: "{{ esxi_hostname }}"
+          validate_certs: no
+          switch: "{{ student_ID }}"
+          portgroup: "{{ student_ID + '-SA-vMotion' }}"
+          security:
+              promiscuous_mode: True
+              mac_changes: True
+              forged_transmits: True
+          vlan_id: 12
+      delegate_to: localhost
+
+    - name: Adding Site A Production Portgroup
+      community.vmware.vmware_portgroup:
+          hostname: "{{ vcenter_hostname }}"
+          username: "{{ vcenter_username }}"
+          password: "{{ vcenter_password }}"
+          esxi_hostname: "{{ esxi_hostname }}"
+          validate_certs: no
+          switch: "{{ student_ID }}"
+          portgroup: "{{ student_ID + '-SA-Prod' }}"
+          security:
+              promiscuous_mode: True
+              mac_changes: True
+              forged_transmits: True
+          vlan_id: 13
+      delegate_to: localhost
+
+    - name: Adding Site B Management Portgroup
+      community.vmware.vmware_portgroup:
+          hostname: "{{ vcenter_hostname }}"
+          username: "{{ vcenter_username }}"
+          password: "{{ vcenter_password }}"
+          esxi_hostname: "{{ esxi_hostname }}"
+          validate_certs: no
+          switch: "{{ student_ID }}"
+          portgroup: "{{ student_ID + '-SB-Mgmt' }}"
+          vlan_id: 20
+          security:
+              promiscuous_mode: True
+              mac_changes: True
+              forged_transmits: True
+      delegate_to: localhost
+
+    - name: Adding Site B Storage Portgroup
+      community.vmware.vmware_portgroup:
+          hostname: "{{ vcenter_hostname }}"
+          username: "{{ vcenter_username }}"
+          password: "{{ vcenter_password }}"
+          esxi_hostname: "{{ esxi_hostname }}"
+          validate_certs: no
+          switch: "{{ student_ID }}"
+          portgroup: "{{ student_ID + '-SB-Storage' }}"
+          security:
+              promiscuous_mode: True
+              mac_changes: True
+              forged_transmits: True
+          vlan_id: 21
+      delegate_to: localhost
+
+    - name: Adding Site B vMotion Portgroup
+      community.vmware.vmware_portgroup:
+          hostname: "{{ vcenter_hostname }}"
+          username: "{{ vcenter_username }}"
+          password: "{{ vcenter_password }}"
+          esxi_hostname: "{{ esxi_hostname }}"
+          validate_certs: no
+          switch: "{{ student_ID }}"
+          portgroup: "{{ student_ID + '-SB-vMotion' }}"
+          security:
+              promiscuous_mode: True
+              mac_changes: True
+              forged_transmits: True
+          vlan_id: 22
+      delegate_to: localhost
+
+    - name: Adding Site B Production Portgroup
+      community.vmware.vmware_portgroup:
+          hostname: "{{ vcenter_hostname }}"
+          username: "{{ vcenter_username }}"
+          password: "{{ vcenter_password }}"
+          esxi_hostname: "{{ esxi_hostname }}"
+          validate_certs: no
+          switch: "{{ student_ID }}"
+          portgroup: "{{ student_ID + '-SB-Prod' }}"
+          security:
+              promiscuous_mode: True
+              mac_changes: True
+              forged_transmits: True
+          vlan_id: 23
+      delegate_to: localhost
+
+    - name: Adding Site C Management Portgroup
+      community.vmware.vmware_portgroup:
+          hostname: "{{ vcenter_hostname }}"
+          username: "{{ vcenter_username }}"
+          password: "{{ vcenter_password }}"
+          esxi_hostname: "{{ esxi_hostname }}"
+          validate_certs: no
+          switch: "{{ student_ID }}"
+          portgroup: "{{ student_ID + '-SC-Mgmt' }}"
+          vlan_id: 30
+          security:
+              promiscuous_mode: True
+              mac_changes: True
+              forged_transmits: True
+      delegate_to: localhost
+
+      
+    - name: Adding vSAN Portgroup
+      community.vmware.vmware_portgroup:
+          hostname: "{{ vcenter_hostname }}"
+          username: "{{ vcenter_username }}"
+          password: "{{ vcenter_password }}"
+          esxi_hostname: "{{ esxi_hostname }}"
+          validate_certs: no
+          switch: "{{ student_ID }}"
+          portgroup: "{{ student_ID + '-vSAN' }}"
+          security:
+              promiscuous_mode: True
+              mac_changes: True
+              forged_transmits: True
+          vlan_id: 100
+      delegate_to: localhost
+
+    - name: Adding Trunk Portgroup
+      community.vmware.vmware_portgroup:
+          hostname: "{{ vcenter_hostname }}"
+          username: "{{ vcenter_username }}"
+          password: "{{ vcenter_password }}"
+          esxi_hostname: "{{ esxi_hostname }}"
+          validate_certs: no
+          switch: "{{ student_ID }}"
+          portgroup: "{{ student_ID + '-Trunk' }}"
+          vlan_id: 4095
+          security:
+              promiscuous_mode: True
+              mac_changes: True
+              forged_transmits: True
+      delegate_to: localhost
