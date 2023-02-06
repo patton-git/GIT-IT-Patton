@@ -16,7 +16,7 @@
       private: no
 
     - name: esxi_hostname
-      prompt: What is your esxi_hostname (ex:172.0.10.13)?
+      prompt: What is your esxi_hostname (ex:172.0.10.11, 172.0.10.12, 172.0.10.13)?
       private: no
 
   tasks: 
