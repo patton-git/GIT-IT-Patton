@@ -55,9 +55,9 @@
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       validate_certs: no
-      name: "{{ item + '-SA-KMS-01' }}"
+      name: "{{ student_ID + '-SA-KMS-01' }}"
       label: "Network adapter 1"
-      network_name: "{{ item + '-SA-Mgmt' }}"
+      network_name: "{{ student_ID + '-SA-Mgmt' }}"
       state: present
       force: yes
     delegate_to: localhost
