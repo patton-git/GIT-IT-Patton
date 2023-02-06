@@ -9,8 +9,7 @@
     cluster_name: "vSAN Cluster"
     esxi_username: "root"
     esxi_password: "VMware1!"
-#    student_ID: "S13"
-#    esxi_hostname: "172.0.10.13"
+
 
   vars_prompt:
     - name: student_ID
@@ -18,9 +17,8 @@
       private: no
 
     - name: esxi_hostname
-      prompt: What is your esxi_hostname (ex:172.0.10.13)?
+      prompt: What is your esxi_hostname (ex:172.0.10.11, 172.0.10.12, 172.0.10.13)?
       private: no
-
 
   tasks: 
     - name: Create Lab Standard Switch
