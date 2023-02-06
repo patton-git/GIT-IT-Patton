@@ -45,6 +45,11 @@
         start_connected: True
     delegate_to: localhost
 
+  - name: Waiting 300 seconds for completing cutomization
+    wait_for:
+      timeout: 300
+    delegate_to: localhost
+
 #  - name: Perform vMotion of virtual machine
 #    community.vmware.vmware_vmotion:
 #      hostname: '{{ vcenter_hostname }}'
@@ -56,24 +61,24 @@
 #    delegate_to: localhost
 
 
-#  - name: shutdown VM to change network connection
-#    community.vmware.vmware_guest:
-#      hostname: "{{ vcenter_hostname }}"
-#      username: "{{ vcenter_username }}"
-#      password: "{{ vcenter_password }}"
-#      validate_certs: no
-#      name: "{{ student_ID + '-DC' }}"
-#      state: "shutdownguest"
-#      state_change_timeout: 60
-#    delegate_to: localhost
+  - name: shutdown VM to change network connection
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ student_ID + '-DC' }}"
+      state: "shutdownguest"
+      state_change_timeout: 60
+    delegate_to: localhost
 
-#  - name: Poweron DC VM
-#    community.vmware.vmware_guest:
-#      hostname: "{{ vcenter_hostname }}"
-#      username: "{{ vcenter_username }}"
-#      password: "{{ vcenter_password }}"
-#      validate_certs: no
-#      name: "{{ student_ID + '-DC' }}"
-#      state: "poweredon"
-#      state_change_timeout: 60
-#    delegate_to: localhost
+  - name: Poweron DC VM
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ student_ID + '-DC' }}"
+      state: "poweredon"
+      state_change_timeout: 60
+    delegate_to: localhost
