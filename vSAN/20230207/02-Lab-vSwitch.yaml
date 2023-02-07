@@ -5,8 +5,8 @@
     vcenter_hostname: "172.0.10.10"
     vcenter_username: "administrator@vsphere.local"
     vcenter_password: "VMware1!"
-    datacenter_name: "vSAN Datacenter"
-    cluster_name: "vSAN Cluster"
+    datacenter_name: "Datacenter"
+    cluster_name: "vSAN"
     esxi_username: "root"
     esxi_password: "VMware1!"
 
