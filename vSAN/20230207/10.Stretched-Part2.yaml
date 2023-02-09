@@ -16,10 +16,16 @@
       hostname: '{{ vcenter_hostname }}'
       username: '{{ vcenter_username }}'
       password: '{{ vcenter_password }}'
+      validate_certs: no      
       license: 4H23J-X92DQ-68AG3-0AA20-0J804
       state: present
     delegate_to: localhost
-  
+
+  - name: Waiting License Up
+    wait_for:
+      timeout: 30
+    delegate_to: localhost
+    
   - name: 11.Create Datacenter
     community.vmware.vmware_datacenter:
       hostname: '{{ vcenter_hostname }}'
