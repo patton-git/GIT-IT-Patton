@@ -1,0 +1,195 @@
+---
+- name : Prepare Stretched vSAN Cluster VMs
+  hosts: localhost
+
+  vars:
+    ansible_python_interpreter: /bin/python3
+    vcenter_hostname: "172.0.10.10"
+    vcenter_username: "administrator@vsphere.local"
+    vcenter_password: "VMware1!"
+    datacenter_name: "Datacenter"
+    cluster_name: "vSAN"
+    datastore_name: "vsanDatastore"
+    template_name: "sa-vcsa-01.vclass.local"
+    snapshot_src_name: "Deployed"
+    full_folder_prefix: "Datacenter/vm/1.Internal-Training/Students/"
+
+  vars_prompt:
+    - name: student_ID
+      prompt: What is your student ID (ex:S00)?
+      private: no
+
+    - name: esxi_hostname
+      prompt: What is your esxi_hostname (ex:172.0.10.11, 172.0.10.12, 172.0.10.13)?
+      private: no
+
+  tasks: 
+  - name: 01.Clone multiple esxi vms from Template
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ item }}"
+      state: "poweredoff"
+      datacenter: '{{ datacenter_name }}'
+      folder: "{{ full_folder_prefix + student_ID }}"
+      esxi_hostname: '{{ esxi_hostname }}'
+      datastore: "{{ datastore_name }}"
+      template: "Temp-vSAN-ESXi"
+    loop:
+      - "{{student_ID+'-SA-ESXi-01'}}"
+      - "{{student_ID+'-SA-ESXi-02'}}"
+      - "{{student_ID+'-SA-ESXi-03'}}"
+      - "{{student_ID+'-SB-ESXi-01'}}"
+      - "{{student_ID+'-SB-ESXi-02'}}"
+      - "{{student_ID+'-SB-ESXi-03'}}"
+    delegate_to: localhost
+
+  - name: 02.Changing ESXi VMs Network Interfaces
+    community.vmware.vmware_guest_network:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ item[0] }}"
+      label: "{{ item[1] }}"
+      network_name: "{{ student_ID + '-Trunk' }}"
+      state: present
+      force: yes
+    with_nested:
+      - [ "{{student_ID+'-SA-ESXi-01'}}", "{{student_ID+'-SA-ESXi-02'}}", "{{student_ID+'-SA-ESXi-03'}}", "{{student_ID+'-SB-ESXi-01'}}", "{{student_ID+'-SB-ESXi-02'}}", "{{student_ID+'-SB-ESXi-03'}}" ]
+      - [ "Network adapter 1", "Network adapter 2", "Network adapter 3", "Network adapter 4" ]
+    delegate_to: localhost
+
+  - name: 03.Power on ESXi VMs
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ item }}"
+      state: "poweredon"
+    loop:
+      - "{{student_ID+'-SA-ESXi-01'}}"
+      - "{{student_ID+'-SA-ESXi-02'}}"
+      - "{{student_ID+'-SA-ESXi-03'}}"
+      - "{{student_ID+'-SB-ESXi-01'}}"
+      - "{{student_ID+'-SB-ESXi-02'}}"
+      - "{{student_ID+'-SB-ESXi-03'}}"
+    delegate_to: localhost
+
+  - name: 04.Waiting boot-up
+    wait_for:
+      timeout: 120
+    delegate_to: localhost
+
+  - name: 05.Configure ESXi VMs
+    community.vmware.vmware_vm_shell:
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      validate_certs: 'false'
+      datacenter: '{{ datacenter_name }}'
+      folder: "{{ full_folder_prefix }}"
+      vm_id: "{{ item.vm_name }}"
+      vm_id_type: vm_name
+      vm_username: 'root'
+      vm_password: 'VMware1!'
+      vm_shell: /bin/sh
+      vm_shell_cwd: "/tmp"
+      vm_shell_args: |
+        echo "Don't remove this line. Write your ESXi configuration commands below."
+        esxcli system settings advanced set -o /Net/FollowHardwareMac -i 1
+        sed -i 's#/system/uuid.*##' /etc/vmware/esx.conf
+        esxcli network vswitch standard uplink add -u vmnic1 -v vSwitch0
+        esxcli network vswitch standard portgroup set -p 'Management Network' -v {{ item.vlanid }}
+        esxcli network vswitch standard portgroup set -p 'VM Network' -v {{ item.vlanid }}
+        esxcli network ip interface ipv4 set -i vmk0 -t static -I {{ item.ipaddr }} -N 255.255.255.0 -g {{ item.gateway }}
+        esxcli network ip route ipv4 add -n 0.0.0.0 -g {{ item.gateway }}
+        esxcli network ip dns server add -s 10.10.10.2
+        esxcli system hostname set --host {{ item.host_name }}
+        esxcli system hostname set --domain vclass.local
+        esxcli system ntp set -e yes -s 10.10.10.1
+        vim-cmd hostsvc/enable_ssh
+        vim-cmd hostsvc/enable_esx_shell
+        vim-cmd hostsvc/advopt/update UserVars.SuppressShellWarning long 1
+        /sbin/generate-certificates
+        /sbin/auto-backup.sh
+      wait_for_process: True
+    with_items:
+    - { vm_name: "{{student_ID+'-SA-ESXi-01'}}", vlanid: 10, host_name: sa-esxi-01, ipaddr: 10.10.10.11, gateway: 10.10.10.1 }
+    - { vm_name: "{{student_ID+'-SA-ESXi-02'}}", vlanid: 10, host_name: sa-esxi-02, ipaddr: 10.10.10.12, gateway: 10.10.10.1 }
+    - { vm_name: "{{student_ID+'-SA-ESXi-03'}}", vlanid: 10, host_name: sa-esxi-03, ipaddr: 10.10.10.13, gateway: 10.10.10.1 }
+    - { vm_name: "{{student_ID+'-SB-ESXi-01'}}", vlanid: 20, host_name: sb-esxi-01, ipaddr: 10.10.20.11, gateway: 10.10.20.1 }
+    - { vm_name: "{{student_ID+'-SB-ESXi-02'}}", vlanid: 20, host_name: sb-esxi-02, ipaddr: 10.10.20.12, gateway: 10.10.20.1 }
+    - { vm_name: "{{student_ID+'-SB-ESXi-03'}}", vlanid: 20, host_name: sb-esxi-03, ipaddr: 10.10.20.13, gateway: 10.10.20.1 }
+
+  - name: 06.Reboot ESXi VM
+    community.vmware.vmware_guest_powerstate:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: 'false'        
+      folder: "{{ full_folder_prefix + student_ID }}"
+      name: "{{ item }}"
+      state: reboot-guest
+    loop:
+      - "{{student_ID+'-SA-ESXi-01'}}"
+      - "{{student_ID+'-SA-ESXi-02'}}"
+      - "{{student_ID+'-SA-ESXi-03'}}"
+      - "{{student_ID+'-SB-ESXi-01'}}"
+      - "{{student_ID+'-SB-ESXi-02'}}"
+      - "{{student_ID+'-SB-ESXi-03'}}"
+    delegate_to: localhost
+
+  - name: 07.Deploy vCenter Server Appliance VM from Template
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ student_ID + '-VCSA' }}"
+      state: "poweredoff"
+      datacenter: '{{ datacenter_name }}'
+      folder: "{{ full_folder_prefix + student_ID }}"
+      esxi_hostname: '{{ esxi_hostname }}'
+      datastore: "{{ datastore_name }}"
+      template: "{{ template_name }}"
+      linked_clone: True
+      snapshot_src: "{{ snapshot_src_name }}"
+    delegate_to: localhost
+
+  - name: 08.Verify vCenter Server Appliance VM on Correct Host
+    community.vmware.vmware_vmotion:
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      validate_certs: no
+      vm_name: "{{ student_ID + '-VCSA' }}"
+      destination_host: "{{ esxi_hostname }}"
+    delegate_to: localhost
+
+  - name: 09.Change Network Interfaces
+    community.vmware.vmware_guest_network:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ student_ID + '-VCSA' }}"
+      label: "Network adapter 1"
+      network_name: "{{ student_ID + '-SA-Mgmt' }}"
+      state: present
+      force: yes
+    delegate_to: localhost
+
+  - name: 10.Poweron VCSA VM
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ student_ID + '-VCSA' }}"
+      state: "poweredon"
+      state_change_timeout: 60
+    delegate_to: localhost
