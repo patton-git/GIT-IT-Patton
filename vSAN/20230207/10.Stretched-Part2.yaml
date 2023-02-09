@@ -11,7 +11,15 @@
     cluster_name: "vSAN"
 
   tasks: 
-
+  - name: Add a new vCenter license
+    community.vmware.vcenter_license:
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      license: 4H23J-X92DQ-68AG3-0AA20-0J804
+      state: present
+    delegate_to: localhost
+  
   - name: 11.Create Datacenter
     community.vmware.vmware_datacenter:
       hostname: '{{ vcenter_hostname }}'
@@ -31,6 +39,7 @@
       datacenter_name: '{{ datacenter_name }}'
       cluster_name: '{{ cluster_name }}'
     delegate_to: localhost
+
 
   - name: 13.Add ESXi Host to vCenter
     community.vmware.vmware_host:
