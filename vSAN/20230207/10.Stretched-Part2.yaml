@@ -180,7 +180,7 @@
       username: '{{ esxi_username }}'
       password: '{{ esxi_password }}'
       validate_certs: no
-#      esxi_hostname: '{{ item.esxi_host }}'        
+      esxi_hostname: '{{ item.esxi_host }}'
       vmotion:
         gateway: '{{ item.vmotion_gateway }}'        
     with_items:
@@ -190,4 +190,4 @@
     - { esxi_host: sb-esxi-01.vclass.local, vmotion_gateway: 10.10.22.1 }
     - { esxi_host: sb-esxi-02.vclass.local, vmotion_gateway: 10.10.22.1 }
     - { esxi_host: sb-esxi-03.vclass.local, vmotion_gateway: 10.10.22.1 }
-    delegate_to: localhost    
+    delegate_to: localhost
