@@ -176,11 +176,11 @@
 
   - name: 19.vMotion tcp/ip stack gateway
     community.vmware.vmware_host_tcpip_stacks:
-      hostname: '{{ item }}'
+      hostname: '{{ item.esxi_host }}'
       username: '{{ esxi_username }}'
       password: '{{ esxi_password }}'
       validate_certs: no
-      esxi_hostname: '{{ item.esxi_host }}'        
+#      esxi_hostname: '{{ item.esxi_host }}'        
       vmotion:
         gateway: '{{ item.vmotion_gateway }}'        
     with_items:
