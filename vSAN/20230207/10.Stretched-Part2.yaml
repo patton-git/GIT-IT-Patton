@@ -1,0 +1,176 @@
+---
+- name : Prepare Stretched vSAN Cluster
+  hosts: localhost
+
+  vars:
+    ansible_python_interpreter: /bin/python3
+    vcenter_hostname: "10.10.10.10"
+    vcenter_username: "administrator@vsphere.local"
+    vcenter_password: "VMware1!"
+    datacenter_name: "Datacenter"
+    cluster_name: "vSAN"
+
+  tasks: 
+
+  - name: 11.Create Datacenter
+    community.vmware.vmware_datacenter:
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      validate_certs: no
+      datacenter_name: '{{ datacenter_name }}'
+      state: present
+    delegate_to: localhost
+
+  - name: 12.Create Cluster
+    community.vmware.vmware_cluster:
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      validate_certs: no
+      datacenter_name: '{{ datacenter_name }}'
+      cluster_name: '{{ cluster_name }}'
+    delegate_to: localhost
+
+  - name: 13.Add ESXi Host to vCenter
+    community.vmware.vmware_host:
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      validate_certs: no
+      datacenter_name: '{{ datacenter_name }}'
+      cluster_name: '{{ cluster_name }}'
+      esxi_hostname: '{{ item }}'
+      esxi_username: 'root'
+      esxi_password: 'VMware1!'
+      state: present
+    loop:
+      - "sa-esxi-01.vclass.local"
+      - "sa-esxi-02.vclass.local"
+      - "sa-esxi-03.vclass.local"
+      - "sb-esxi-01.vclass.local"
+      - "sb-esxi-02.vclass.local"
+      - "sb-esxi-03.vclass.local"
+    delegate_to: localhost
+
+  - name: 14.Create dvSwitch
+    community.vmware.vmware_dvswitch:
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      validate_certs: no
+      datacenter: '{{ datacenter_name }}'
+      switch: DSwitch
+      version: 7.0.3
+      uplink_quantity: 2
+      state: present
+    delegate_to: localhost
+
+  - name: 15.Add Host to dVS
+    community.vmware.vmware_dvs_host:
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      validate_certs: no        
+      esxi_hostname: '{{ item }}'
+      switch_name: DSwitch
+      vmnics:
+        - vmnic2
+        - vmnic3
+      state: present
+    loop:
+      - "sa-esxi-01.vclass.local"
+      - "sa-esxi-02.vclass.local"
+      - "sa-esxi-03.vclass.local"
+      - "sb-esxi-01.vclass.local"
+      - "sb-esxi-02.vclass.local"
+      - "sb-esxi-03.vclass.local"
+    delegate_to: localhost
+
+  - name: 16.Create vlan portgroups
+    community.vmware.vmware_dvs_portgroup:
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      validate_certs: no        
+      portgroup_name: '{{ item.portgroup }}'
+      switch_name: DSwitch
+      vlan_id: '{{ item.vlanid }}'
+      port_binding: static
+      state: present
+    with_items:
+    - { portgroup: DPG-SA-Mgmt,    vlanid: 10 }
+    - { portgroup: DPG-SA-vMotion, vlanid: 12 }
+    - { portgroup: DPG-SA-Prod,    vlanid: 13 }
+    - { portgroup: DPG-SB-Mgmt,    vlanid: 20 }
+    - { portgroup: DPG-SB-vMotion, vlanid: 22 }
+    - { portgroup: DPG-SB-Prod,    vlanid: 23 }
+    - { portgroup: DPG-vSAN,       vlanid: 100 }
+    delegate_to: localhost
+
+  - name: 17.Add vSAN vmkernel adpater
+    community.vmware.vmware_vmkernel:
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      validate_certs: no
+      esxi_hostname: '{{ item.esxi_host }}'
+      dvswitch_name: DSwitch
+      portgroup_name: DPG-vSAN
+      network:
+        type: 'static'
+        ip_address: '{{ item.vsanip }}'
+        subnet_mask: 255.255.255.0
+      state: present
+      enable_vsan: yes
+    with_items:
+    - { esxi_host: sa-esxi-01.vclass.local, vsanip: 10.10.100.11 }
+    - { esxi_host: sa-esxi-02.vclass.local, vsanip: 10.10.100.12 }
+    - { esxi_host: sa-esxi-03.vclass.local, vsanip: 10.10.100.13 }
+    - { esxi_host: sb-esxi-01.vclass.local, vsanip: 10.10.100.21 }
+    - { esxi_host: sb-esxi-02.vclass.local, vsanip: 10.10.100.22 }
+    - { esxi_host: sb-esxi-03.vclass.local, vsanip: 10.10.100.23 }
+    delegate_to: localhost
+
+  - name: 18.Add vMotion vmkernel port
+    community.vmware.vmware_vmkernel:
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      validate_certs: no
+      esxi_hostname: '{{ item.esxi_host }}'
+      dvswitch_name: DSwitch
+      portgroup_name: '{{ item.portgroup }}' 
+      network:
+        type: 'static'
+        ip_address: '{{ item.vmotionip }}'
+        subnet_mask: 255.255.255.0
+        tcpip_stack: vmotion
+      state: present
+      enable_vmotion: yes
+    with_items:
+    - { esxi_host: sa-esxi-01.vclass.local, portgroup: DPG-SA-vMotion, vmotionip: 10.10.12.11 }
+    - { esxi_host: sa-esxi-02.vclass.local, portgroup: DPG-SA-vMotion, vmotionip: 10.10.12.12 }
+    - { esxi_host: sa-esxi-03.vclass.local, portgroup: DPG-SA-vMotion, vmotionip: 10.10.12.13 }
+    - { esxi_host: sb-esxi-01.vclass.local, portgroup: DPG-SB-vMotion, vmotionip: 10.10.22.11 }
+    - { esxi_host: sb-esxi-02.vclass.local, portgroup: DPG-SB-vMotion, vmotionip: 10.10.22.12 }
+    - { esxi_host: sb-esxi-03.vclass.local, portgroup: DPG-SB-vMotion, vmotionip: 10.10.22.13 }
+    delegate_to: localhost
+
+  - name: 19.vMotion tcp/ip stack gateway
+    community.vmware.vmware_host_tcpip_stacks:
+      hostname: '{{ item }}'
+      username: '{{ esxi_username }}'
+      password: '{{ esxi_password }}'
+      validate_certs: no
+      esxi_hostname: '{{ item.esxi_host }}'        
+      vmotion:
+        gateway: '{{ item.vmotion_gateway }}'        
+    with_items:
+    - { esxi_host: sa-esxi-01.vclass.local, vmotion_gateway: 10.10.12.1 }
+    - { esxi_host: sa-esxi-02.vclass.local, vmotion_gateway: 10.10.12.1 }
+    - { esxi_host: sa-esxi-03.vclass.local, vmotion_gateway: 10.10.12.1 }
+    - { esxi_host: sb-esxi-01.vclass.local, vmotion_gateway: 10.10.22.1 }
+    - { esxi_host: sb-esxi-02.vclass.local, vmotion_gateway: 10.10.22.1 }
+    - { esxi_host: sb-esxi-03.vclass.local, vmotion_gateway: 10.10.22.1 }
+    delegate_to: localhost    
