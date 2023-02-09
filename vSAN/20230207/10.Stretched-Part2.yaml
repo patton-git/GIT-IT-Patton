@@ -9,6 +9,8 @@
     vcenter_password: "VMware1!"
     datacenter_name: "Datacenter"
     cluster_name: "vSAN"
+    esxi_username: "root"
+    esxi_password: "VMware1!"
 
   tasks: 
   - name: Add a new vCenter license
