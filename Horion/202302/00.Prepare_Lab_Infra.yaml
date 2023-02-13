@@ -13,7 +13,9 @@
     datacenter_name: "Datacenter"
     cluster_name: "vSAN"
     datastore_name: "vsanDatastore"    
-    folder_prefix: "/1.Internal-Training/Horizon/"
+    folder_prefix: "Datacenter/vm/1.Internal-Training/3.Horizon/"
+    public_net: "DPG-172.0.10.x"
+    private_net: "{{ student_ID + '-Trunk' }}"    
 
 
   vars_prompt:
@@ -34,8 +36,8 @@
         validate_certs: no
         datacenter: '{{ datacenter_name }}'
         folder_type: vm
+        parent_folder: '1.Internal-Training/3.Horizon/'        
         folder_name: '{{ student_ID }}'
-        parent_folder: '{{ folder_prefix }}'
         state: present
       register: sub_folder_creation_result
       delegate_to: localhost
@@ -84,7 +86,7 @@
         security:
           promiscuous_mode: True
           mac_changes: True
-          forged_transmits: True
+          forged_transmits: True        
       delegate_to: localhost
 
     - name: 06.Adding Storage Portgroup to Lab Switch
@@ -96,7 +98,7 @@
         validate_certs: no
         switch: "{{ student_ID }}"
         portgroup: "{{ student_ID + '-Storage' }}"
-        vlan_id: 20
+        vlan_id: 11
         security:
           promiscuous_mode: True
           mac_changes: True
@@ -112,29 +114,47 @@
         validate_certs: no
         switch: "{{ student_ID }}"
         portgroup: "{{ student_ID + '-vMotion' }}"
-        vlan_id: 30
+        vlan_id: 12
         security:
           promiscuous_mode: True
           mac_changes: True
-          forged_transmits: True
+          forged_transmits: True        
       delegate_to: localhost
 
-
-    - name: 08.Deploy VyOS Router form Template
-      community.vmware.vmware_guest:
+    - name: 08.Adding Production Portgroup to Lab Switch
+      community.vmware.vmware_portgroup:
         hostname: "{{ vcenter_hostname }}"
         username: "{{ vcenter_username }}"
         password: "{{ vcenter_password }}"
+        esxi_hostname: "{{ esxi_hostname }}"
         validate_certs: no
-        template: "Temp-VyOS"
-        datacenter: '{{ datacenter_name }}'
-        folder: "{{ folder_prefix + student_ID }}"
-        name: "{{ student_ID + '-Router' }}"
-        esxi_hostname: '{{ esxi_hostname }}'
-        datastore: "{{ datastore_name }}"
+        switch: "{{ student_ID }}"
+        portgroup: "{{ student_ID + '-Prod' }}"
+        vlan_id: 13
+        security:
+          promiscuous_mode: True
+          mac_changes: True
+          forged_transmits: True        
       delegate_to: localhost
 
-    - name: 09.Verify VyOS Router VM on Correct Host
+      
+    - name: 09.Deploy VyOS ova
+      community.vmware.vmware_deploy_ovf:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: 'false'
+        datacenter: '{{ datacenter_name }}'
+        folder: "{{ folder_prefix + student_ID }}"
+        esxi_hostname: '{{ esxi_hostname }}'
+        datastore: 'vsanDatastore'
+        name: "{{ student_ID + '-Router' }}"
+        networks: { 'DPG-172.0.10.x': "{{ public_net }}", 'DPG-172.0.20.x': "{{ private_net }}" }
+        power_on: no
+        ovf: /mnt/c/temp-vyos-1.4.ova    
+      delegate_to: localhost
+
+    - name: 10.Verify VyOS Router VM on Correct Host
       community.vmware.vmware_vmotion:
         hostname: '{{ vcenter_hostname }}'
         username: '{{ vcenter_username }}'
@@ -144,18 +164,6 @@
         destination_host: "{{ esxi_hostname }}"
       delegate_to: localhost
 
-    - name: 10.Change VyOS Router 2nd network
-      community.vmware.vmware_guest_network:
-        hostname: "{{ vcenter_hostname }}"
-        username: "{{ vcenter_username }}"
-        password: "{{ vcenter_password }}"
-        validate_certs: no
-        datacenter: "{{ datacenter_name }}"
-        name: "{{ student_ID + '-Router' }}"
-        network_name: "{{ student_ID + '-Trunk' }}"
-        label: 'Network adapter 2'
-        state: present
-      delegate_to: localhost
 
     - name: 11.Poweron VyOS Router VM
       community.vmware.vmware_guest:
@@ -197,18 +205,21 @@
           set protocols static route 0.0.0.0/0 next-hop 172.0.10.1
           set system name-server 172.0.10.2
           set system ntp server kr.pool.ntp.org
-          set interfaces ethernet eth1 vif 10 description 'VLAN 10 - Management Network'
+          set interfaces ethernet eth1 vif 10 description 'VLAN 10 - Site A Management'
           set interfaces ethernet eth1 vif 10 address 10.10.10.1/24
-          set interfaces ethernet eth1 vif 20 description 'VLAN 20 - Storage Network'
-          set interfaces ethernet eth1 vif 20 address 10.10.20.1/24
-          set interfaces ethernet eth1 vif 30 description 'VLAN 30 - vMotion Network'
-          set interfaces ethernet eth1 vif 30 address 10.10.30.1/24
+          set interfaces ethernet eth1 vif 11 description 'VLAN 11 - Site A Storage'
+          set interfaces ethernet eth1 vif 11 address 10.10.11.1/24
+          set interfaces ethernet eth1 vif 12 description 'VLAN 12 - Site A vMotion'
+          set interfaces ethernet eth1 vif 12 address 10.10.12.1/24
+          set interfaces ethernet eth1 vif 13 description 'VLAN 13 - Site A Production'
+          set interfaces ethernet eth1 vif 13 address 10.10.13.1/24
           set nat source rule 100 outbound-interface eth0
           set nat source rule 100 source address 10.10.10.0/24
           set nat source rule 100 translation address masquerade
           commit
           save"
         wait_for_process: True
+        timeout: 180
       delegate_to: localhost
       register: shell_command_with_wait_timeout
 
@@ -225,8 +236,8 @@
         esxi_hostname: '{{ esxi_hostname }}'
         datastore: "{{ datastore_name }}"
         linked_clone: True
-        template: "Temp-Horizon-DC"
         snapshot_src: "202302"
+        template: "Temp-Horizon-DC"
       delegate_to: localhost
       
     - name: 15.Verify Domain Controller VM on Correct Host
@@ -247,10 +258,19 @@
         validate_certs: no
         datacenter: "{{ datacenter_name }}"
         name: "{{ student_ID + '-DC' }}"
-        network_name: "{{ student_ID + '-Mgmt' }}"
-        label: 'Network adapter 1'
-        state: present
+        networks:
+          - label: "Network adapter 1"
+            name: "{{ student_ID + '-Mgmt' }}"
+            state: present
+            connected: yes
+            start_connected: yes
+          - label: "Network adapter 2"
+            name: "{{ student_ID + '-Storage' }}"
+            state: present
+            connected: yes
+            start_connected: yes               
       delegate_to: localhost
+
 
     - name: 17.Poweron Domain Controller VM
       community.vmware.vmware_guest:
@@ -275,7 +295,7 @@
         esxi_hostname: '{{ esxi_hostname }}'
         datastore: "{{ datastore_name }}"
         linked_clone: True
-        template: "Temp-vSAN-VCSA"
+        template: "sa-vcsa-01.vclass.local"
         snapshot_src: "Deployed"
         state: "poweredoff"
       delegate_to: localhost
@@ -326,7 +346,7 @@
         folder: "{{ folder_prefix + student_ID }}"
         esxi_hostname: '{{ esxi_hostname }}'
         datastore: "{{ datastore_name }}"
-        template: "Temp-ESXi"
+        template: "Temp-Horizon-ESXi"
         state: "poweredoff"
       loop:
         - "{{student_ID+'-ESXi-01'}}"
@@ -348,40 +368,43 @@
         - "{{student_ID+'-ESXi-03'}}"
       delegate_to: localhost
 
-    - name: 24.Change ESXi VMs vCPU, vRAM
-      community.vmware.vmware_guest:
+
+    - name: 24.Change ESXi VMs Network Interfaces
+      community.vmware.vmware_guest_network:
         hostname: "{{ vcenter_hostname }}"
         username: "{{ vcenter_username }}"
         password: "{{ vcenter_password }}"
         validate_certs: no
-        datacenter: "{{ datacenter_name }}"
         name: "{{ item }}"
-        hardware:
-          memory_mb: 16384
-          num_cpus: 4
+        networks:
+          - label: "Network adapter 1"
+            name: "{{ student_ID + '-Mgmt' }}"
+            state: present
+            connected: yes
+            start_connected: yes
+          - label: "Network adapter 2"
+            name: "{{ student_ID + '-Storage' }}"
+            state: present
+            connected: yes
+            start_connected: yes          
+          - label: "Network adapter 3"
+            name: "{{ student_ID + '-Trunk' }}"
+            state: present
+            connected: yes
+            start_connected: yes
+          - label: "Network adapter 4"
+            name: "{{ student_ID + '-Trunk' }}"
+            state: present
+            connected: yes
+            start_connected: yes      
       loop:
         - "{{student_ID+'-ESXi-01'}}"
         - "{{student_ID+'-ESXi-02'}}"
         - "{{student_ID+'-ESXi-03'}}"
       delegate_to: localhost
 
-    - name: 25.Change ESXi VMs Network Interfaces
-      community.vmware.vmware_guest_network:
-        hostname: "{{ vcenter_hostname }}"
-        username: "{{ vcenter_username }}"
-        password: "{{ vcenter_password }}"
-        validate_certs: no
-        name: "{{ item[0] }}"
-        label: "{{ item[1] }}"
-        network_name: "{{ student_ID + '-Trunk' }}"
-        state: present
-        force: yes
-      with_nested:
-        - [ "{{student_ID+'-ESXi-01'}}", "{{student_ID+'-ESXi-02'}}", "{{student_ID+'-ESXi-03'}}" ]
-        - [ "Network adapter 1", "Network adapter 2", "Network adapter 3", "Network adapter 4" ]
-      delegate_to: localhost
 
-    - name: 26.Power on ESXi VMs
+    - name: 25.Power on ESXi VMs
       community.vmware.vmware_guest:
         hostname: "{{ vcenter_hostname }}"
         username: "{{ vcenter_username }}"
@@ -395,12 +418,12 @@
         - "{{student_ID+'-ESXi-03'}}"
       delegate_to: localhost
 
-    - name: 27.Waiting boot-up
+    - name: 26.Waiting boot-up
       wait_for:
         timeout: 120
       delegate_to: localhost
 
-    - name: 28.Configure ESXi VM
+    - name: 27.Configure ESXi VM
       community.vmware.vmware_vm_shell:
         hostname: '{{ vcenter_hostname }}'
         username: '{{ vcenter_username }}'
@@ -415,16 +438,16 @@
         vm_shell: /bin/sh
         vm_shell_cwd: "/tmp"
         vm_shell_args: |
+          echo "Don't remove this line. Write your ESXi configuration commands below."        
           esxcli system settings advanced set -o /Net/FollowHardwareMac -i 1
           sed -i 's#/system/uuid.*##' /etc/vmware/esx.conf
-          esxcli network vswitch standard portgroup set -p='Management Network' -v=10
           esxcli network ip interface ipv4 set -i=vmk0 -t=static -I='{{ item.ipaddr }}' -N=255.255.255.0 -g=10.10.10.1
           esxcli network ip route ipv4 add -n 0.0.0.0 -g 10.10.10.1
           esxcli network ip dns server add -s 10.10.10.2
           esxcli system hostname set --host='{{ item.host_name }}'
           esxcli system hostname set --domain=vclass.local
           /sbin/generate-certificates
-          esxcli system ntp set -e yes -s kr.pool.ntp.org
+          esxcli system ntp set -e yes -s 10.10.10.1
           vim-cmd hostsvc/enable_ssh
           vim-cmd hostsvc/enable_esx_shell
           /sbin/auto-backup.sh
