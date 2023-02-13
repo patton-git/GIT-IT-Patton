@@ -226,7 +226,7 @@
         datastore: "{{ datastore_name }}"
         linked_clone: True
         template: "Temp-Horizon-DC"
-        snapshot_src: "20220611"
+        snapshot_src: "202302"
       delegate_to: localhost
       
     - name: 15.Verify Domain Controller VM on Correct Host
