@@ -10,10 +10,10 @@
     vcenter_password: "VMware1!"
     esxi_username: root
     esxi_password: VMware1!
-    datacenter_name: "vSAN Datacenter"
-    cluster_name: "vSAN Cluster"
+    datacenter_name: "Datacenter"
+    cluster_name: "vSAN"
     datastore_name: "vsanDatastore"    
-    folder_prefix: "/1.Internal-Education/Horizon/"
+    folder_prefix: "/1.Internal-Training/Horizon/"
 
 
   vars_prompt:
