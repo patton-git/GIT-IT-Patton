@@ -14,7 +14,8 @@ Import-Module NFS
 New-NfsShare -Name 'nfs01' -Path 'D:\nfs01' -EnableUnmappedAccess $True -Authentication sys
 
 
-Grant-NfsSharePermission -Name 'nfs01' -ClientName 'all' -ClientType 'global' -Permission 'readwrite' -AllowRootAccess:$true
+Grant-NfsSharePermission -Name 'nfs01' -ClientName 'all' -ClientType 'builtin' -Permission 'readwrite' -AllowRootAccess:$true
+Grant-NfsSharePermission -Name 'nfs01' -ClientName 'all' -ClientType 'builtin' -Permission 'readwrite' -AllowRootAccess:$true
 
 # Grant-NfsSharePermission -Name 'nfs01' -ClientName 'sa-esxi-01.vclass.local' -ClientType 'Host' -Permission 'readwrite' -AllowRootAccess:$true
 # Grant-NfsSharePermission -Name 'nfs01' -ClientName 'sa-esxi-02.vclass.local' -ClientType 'Host' -Permission 'readwrite' -AllowRootAccess:$true
