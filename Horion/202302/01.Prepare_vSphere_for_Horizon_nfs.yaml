@@ -1,0 +1,198 @@
+---
+- name : Prepare Horizon Lab #2
+
+  hosts: localhost
+
+  vars:
+    ansible_python_interpreter: /bin/python3
+    vcenter_hostname: "10.10.10.10"
+    vcenter_username: "administrator@vsphere.local"
+    vcenter_password: "VMware1!"
+    datacenter_name: "GIT Education"
+    cluster_name: "Horizon"
+    esxi_username: "root"
+    esxi_password: "VMware1!"
+
+  tasks: 
+    - name: Add a new vCenter license
+      community.vmware.vcenter_license:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: no      
+        license: 4H23J-X92DQ-68AG3-0AA20-0J804
+        state: present
+      delegate_to: localhost
+
+    - name: Waiting License Up
+      wait_for:
+        timeout: 30
+      delegate_to: localhost
+
+    - name: 01.Create Datacenter
+      community.vmware.vmware_datacenter:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: no
+        datacenter_name: '{{ datacenter_name }}'
+        state: present
+      delegate_to: localhost
+
+    - name: 02.Create Cluster
+      community.vmware.vmware_cluster:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: no
+        datacenter_name: '{{ datacenter_name }}'
+        cluster_name: '{{ cluster_name }}'
+      delegate_to: localhost
+
+    - name: 03.Add ESXi Host to vCenter
+      community.vmware.vmware_host:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: no
+        datacenter_name: '{{ datacenter_name }}'
+        cluster_name: '{{ cluster_name }}'
+        esxi_hostname: '{{ item }}'
+        esxi_username: 'root'
+        esxi_password: 'VMware1!'
+        state: present
+      loop:
+        - "sa-esxi-01.vclass.local"
+        - "sa-esxi-02.vclass.local"
+        - "sa-esxi-03.vclass.local"
+      delegate_to: localhost
+
+
+
+    - name: 14.Create dvSwitch
+      community.vmware.vmware_dvswitch:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: no
+        datacenter: '{{ datacenter_name }}'
+        switch: DSwitch
+        version: 7.0.3
+        uplink_quantity: 2
+        state: present
+      delegate_to: localhost
+
+    - name: 15.Add Host to dVS
+      community.vmware.vmware_dvs_host:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: no        
+        esxi_hostname: '{{ item }}'
+        switch_name: DSwitch
+        vmnics:
+          - vmnic2
+          - vmnic3
+        state: present
+      loop:
+        - "sa-esxi-01.vclass.local"
+        - "sa-esxi-02.vclass.local"
+        - "sa-esxi-03.vclass.local"
+      delegate_to: localhost
+
+    - name: 16.Create vlan portgroup - Mgmt - 10
+      community.vmware.vmware_dvs_portgroup:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: no        
+        portgroup_name: DPG-Mgmt
+        switch_name: DSwitch
+        vlan_id: 10
+        port_binding: static
+        state: present
+      delegate_to: localhost
+
+    - name: 17.Create vlan portgroup - vMotion - 12
+      community.vmware.vmware_dvs_portgroup:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: no        
+        portgroup_name: DPG-vMotion
+        switch_name: DSwitch
+        vlan_id: 12
+        port_binding: static
+        state: present
+      delegate_to: localhost
+
+    - name: 18.Create vlan portgroup - Production - 13
+      community.vmware.vmware_dvs_portgroup:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: no        
+        portgroup_name: DPG-Prod-Internal
+        switch_name: DSwitch
+        vlan_id: 13
+        port_binding: static
+        state: present
+      delegate_to: localhost
+
+
+    - name: 19.Add vMotion vmkernel port
+      community.vmware.vmware_vmkernel:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: no
+        esxi_hostname: '{{ item.esxi_host }}'
+        dvswitch_name: DSwitch
+        portgroup_name: DPG-vMotion
+        network:
+          type: 'static'
+          ip_address: '{{ item.vmotionip }}'
+          subnet_mask: 255.255.255.0
+          tcpip_stack: vmotion
+        state: present
+        enable_vmotion: yes
+      with_items:
+      - { esxi_host: sa-esxi-01.vclass.local, vmotionip: 10.10.12.11 }
+      - { esxi_host: sa-esxi-02.vclass.local, vmotionip: 10.10.12.12 }
+      - { esxi_host: sa-esxi-03.vclass.local, vmotionip: 10.10.12.13 }
+      delegate_to: localhost
+
+
+    - name: 20.vmoption tcp/ip stack gateway
+      community.vmware.vmware_host_tcpip_stacks:
+        hostname: '{{ item }}'
+        username: '{{ esxi_username }}'
+        password: '{{ esxi_password }}'
+        validate_certs: no
+        esxi_hostname: '{{ item }}'        
+        vmotion:
+          gateway: 10.10.12.1
+      loop:
+        - "sa-esxi-01.vclass.local"
+        - "sa-esxi-02.vclass.local"
+        - "sa-esxi-03.vclass.local"
+      delegate_to: localhost    
+
+    - name: Mount NFS datastores to ESXi
+      community.vmware.vmware_host_datastore:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        datastore_name: '{{ nfs01 }}'
+        datastore_type: '{{ nfs }}'
+        nfs_server: '{{ 10.10.10.2 }}'
+        nfs_path: '{{ /nfs01 }}'
+        nfs_ro: no
+        esxi_hostname: '{{ item }}'
+        state: present
+      delegate_to: localhost
+      loop:
+        - "sa-esxi-01.vclass.local"
+        - "sa-esxi-02.vclass.local"
+        - "sa-esxi-03.vclass.local"
+      
