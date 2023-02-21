@@ -183,10 +183,11 @@
         hostname: '{{ vcenter_hostname }}'
         username: '{{ vcenter_username }}'
         password: '{{ vcenter_password }}'
-        datastore_name: '{{ nfs01 }}'
-        datastore_type: '{{ nfs }}'
-        nfs_server: '{{ 10.10.10.2 }}'
-        nfs_path: '{{ /nfs01 }}'
+        validate_certs: no
+        datastore_name: "nfs01"
+        datastore_type: "nfs"
+        nfs_server: "10.10.10.2"
+        nfs_path: "/nfs01"
         nfs_ro: no
         esxi_hostname: '{{ item }}'
         state: present
