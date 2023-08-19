@@ -258,17 +258,23 @@
         validate_certs: no
         datacenter: "{{ datacenter_name }}"
         name: "{{ student_ID + '-DC' }}"
-        networks:
-          - label: "Network adapter 1"
-            name: "{{ student_ID + '-Mgmt' }}"
-            state: present
-            connected: yes
-            start_connected: yes
-          - label: "Network adapter 2"
-            name: "{{ student_ID + '-Storage' }}"
-            state: present
-            connected: yes
-            start_connected: yes               
+        network_name: '{{ item.network }}'
+        lable: '{{ item.label }}'
+        state: present
+      loop:
+      - { network: "{{ student_ID + '-Mgmt' }}", lable: "Network adapter 1" }
+      - { network: "{{ student_ID + '-Storage' }}", lable: "Network adapter 2" }
+#        networks:
+#          - label: "Network adapter 1"
+#            name: "{{ student_ID + '-Mgmt' }}"
+#            state: present
+#            connected: yes
+#            start_connected: yes
+#          - label: "Network adapter 2"
+#            name: "{{ student_ID + '-Storage' }}"
+#            state: present
+#            connected: yes
+#            start_connected: yes               
       delegate_to: localhost
 
 
