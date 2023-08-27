@@ -1,0 +1,39 @@
+---
+- hosts: localhost
+  gather_facts: no
+#  vars_files: ./vars.yaml
+  vars:
+    ansible_python_interpreter: /bin/python3
+    vcenter_hostname: "172.0.10.10"
+    vcenter_username: "s00@edu.git"
+    vcenter_password: "VMware1!"
+    datacenter_name: "Datacenter"
+    parent_folder: "1.Internal-Training/Students"
+    student_id: "S00"
+    folder_name: "{{ datacenter_name + '/vm/' + parent_folder + '/' + student_id }}"
+    
+  tasks:   
+  - name: 07. Make Domain Controller
+    community.vmware.vmware_vm_shell:
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      validate_certs: 'false'
+      datacenter: '{{ datacenter_name }}'
+      folder: "{{ folder_name }}"
+      vm_id: "{{ student_id + '-DC' }}"
+      vm_id_type: vm_name
+      vm_username: 'Administrator'
+      vm_password: 'VMware1!'
+      vm_shell: 'c:\windows\system32\windowspowershell\v1.0\powershell.exe'
+      vm_shell_args: '{{ item }}'
+      vm_shell_cwd: 'c:\Users\Administrator'
+      wait_for_process: True
+      timeout: 300
+    loop:
+    - '-command "(Install-WindowsFeature -Name AD-Domain-Services -IncludeManagementTools)"' 
+    - '-command "Import-Module ADDSDeployment"'
+    - '-command "(Install-ADDSForest -CreateDnsDelegation:$false -DatabasePath C:\Windows\NTDS -DomainMode WinThreshold -DomainName vclass.local -DomainNetbiosName VCLASS -ForestMode WinThreshold -InstallDns:$true -LogPath C:\Windows\NTDS -NoRebootOnCompletion:$false -SysvolPath C:\Windows\SYSVOL -Force:$true -SafeModeAdministratorPassword (ConvertTo-SecureString -AsPlainText "VMware1!" -force)")"'
+    delegate_to: localhost
+    register: shell_command_with_wait_timeout
+    ignore_errors: true
