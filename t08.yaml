@@ -1,0 +1,73 @@
+---
+- hosts: localhost
+  gather_facts: no
+#  vars_files: ./vars.yaml
+  vars:
+    ansible_python_interpreter: /bin/python3
+    vcenter_hostname: "172.0.10.10"
+    vcenter_username: "s00@edu.git"
+    vcenter_password: "VMware1!"
+    datacenter_name: "Datacenter"
+    parent_folder: "1.Internal-Training/Students"
+    student_id: "S00"
+    folder_name: "{{ datacenter_name + '/vm/' + parent_folder + '/' + student_id }}"
+
+  tasks: 
+# https://docs.ansible.com/ansible/latest/collections/community/vmware/vmware_guest_file_operation_module.html  
+  - name: Copy powershell script to VM
+    community.vmware.vmware_guest_file_operation:
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      validate_certs: 'false'
+      vm_id: "{{ student_ID + '-DC' }}"
+      vm_id_type: vm_name
+      vm_username: 'Administrator'
+      vm_password: 'VMware1!'
+      copy:
+        src: '{{ item.src }}'
+        dest: '{{ item.dst }}'
+        overwrite: true
+    loop:    
+    - {src: "/mnt/c/ansible/Add_dns_records.ps1", dst: "c:\\Material\\Add_dns_records.ps1" }
+    - {src: "/mnt/c/ansible/Add_ad_users.ps1", dst: "c:\\Material\\Add_ad_users.ps1" }
+    delegate_to: localhost
+
+  - name: Run dns powershell script
+    community.vmware.vmware_vm_shell:
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      validate_certs: 'false'
+      vm_id: "{{ student_ID + '-DC' }}"
+      vm_id_type: vm_name
+      vm_username: 'Administrator'
+      vm_password: 'VMware1!'
+      vm_shell: 'c:\windows\system32\windowspowershell\v1.0\powershell.exe'
+      vm_shell_args: '{{ item }}'
+      vm_shell_cwd: 'c:\Users\Administrator'
+      wait_for_process: True
+      timeout: 60
+    loop:
+    - 'c:\Material\Add_dns_records.ps1'
+    - 'c:\Material\Add_ad_users.ps1'
+    delegate_to: localhost
+
+  - name: Delete copied powershell script
+    community.vmware.vmware_vm_shell:
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      validate_certs: 'false'
+      vm_id: "{{ student_ID + '-DC' }}"
+      vm_id_type: vm_name
+      vm_username: 'Administrator'
+      vm_password: 'VMware1!'
+      vm_shell: 'c:\windows\system32\windowspowershell\v1.0\powershell.exe'
+      vm_shell_args: '{{ item }}'
+      vm_shell_cwd: 'c:\Users\Administrator'
+      wait_for_process: True
+    loop:
+    - 'Remove-Item -path c:\Material\Add_dns_records.ps1'
+    - 'Remove-Item -path c:\Material\Add_ad_users.ps1'
+    delegate_to: localhost
