@@ -1,0 +1,27 @@
+---
+- hosts: localhost
+  gather_facts: no
+#  vars_files: ./vars.yaml
+  vars:
+    ansible_python_interpreter: /bin/python3
+    vcenter_hostname: "172.0.10.10"
+    vcenter_username: "s00@edu.git"
+    vcenter_password: "VMware1!"
+    datacenter_name: "Datacenter"
+    parent_folder: "1.Internal-Training/Students"
+    student_id: "S00"
+    folder_name: "{{ datacenter_name + '/vm/' + parent_folder + '/' + student_id }}"
+    
+  tasks:
+# https://docs.ansible.com/ansible/latest/collections/community/vmware/vmware_guest_module.html#parameter-state  
+  - name: 09. Remove VM
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ student_id + '-DC' }}"
+      state: "absent"
+      datacenter: '{{ datacenter_name }}'
+      folder: "{{ folder_name }}"
+    delegate_to: localhost
