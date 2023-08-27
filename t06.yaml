@@ -24,7 +24,7 @@
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       validate_certs: no
-      name: "{{ student_ID + '-DC' }}"
+      name: "{{ student_id + '-DC' }}"
       state: "poweredon"
       datacenter: '{{ datacenter_name }}'
       folder: "{{ folder_name }}"
@@ -34,7 +34,7 @@
       linked_clone: True
       snapshot_src: "{{ snapshot_name }}"
       networks:
-      - name: "{{ student_ID + '-SA-Mgmt' }}"
+      - name: "{{ student_id + '-SA-Mgmt' }}"
         connected: True
         start_connected: True
         ip: 10.10.10.2
