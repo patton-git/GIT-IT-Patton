@@ -5,10 +5,9 @@
 #  vars_files: ./vars.yaml
   vars:
     ansible_python_interpreter: /bin/python3
-    vcenter_hostname: "172.0.10.10"
-    vcenter_username: "s00@edu.git"
-    vcenter_password: "VMware1!"
-    datacenter_name: "Datacenter"
+    esxi_hostname: "172.0.10.13"
+    esxi_username: "root"
+    esxi_password: "VMware1!"
     student_id: "S00"
 
   tasks: 
