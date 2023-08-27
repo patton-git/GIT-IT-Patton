@@ -20,8 +20,8 @@
       password: "{{ vcenter_password }}"
       esxi_hostname: "{{ esxi_hostname }}"
       validate_certs: no
-      switch: "{{ student_ID }}"
-      portgroup: "{{ student_ID + '-SA-Mgmt' }}"
+      switch: "{{ student_id }}"
+      portgroup: "{{ student_id + '-SA-Mgmt' }}"
       vlan_id: 10
       security:
         promiscuous_mode: True
@@ -36,8 +36,8 @@
       password: "{{ vcenter_password }}"
       esxi_hostname: "{{ esxi_hostname }}"
       validate_certs: no
-      switch: "{{ student_ID }}"
-      portgroup: "{{ student_ID + '-SA-Storage' }}"
+      switch: "{{ student_id }}"
+      portgroup: "{{ student_id + '-SA-Storage' }}"
       security:
         promiscuous_mode: True
         mac_changes: True
@@ -52,8 +52,8 @@
       password: "{{ vcenter_password }}"
       esxi_hostname: "{{ esxi_hostname }}"
       validate_certs: no
-      switch: "{{ student_ID }}"
-      portgroup: "{{ student_ID + '-SA-vMotion' }}"
+      switch: "{{ student_id }}"
+      portgroup: "{{ student_id + '-SA-vMotion' }}"
       security:
         promiscuous_mode: True
         mac_changes: True
@@ -68,8 +68,8 @@
       password: "{{ vcenter_password }}"
       esxi_hostname: "{{ esxi_hostname }}"
       validate_certs: no
-      switch: "{{ student_ID }}"
-      portgroup: "{{ student_ID + '-SB-Mgmt' }}"
+      switch: "{{ student_id }}"
+      portgroup: "{{ student_id + '-SB-Mgmt' }}"
       vlan_id: 20
       security:
         promiscuous_mode: True
@@ -84,8 +84,8 @@
       password: "{{ vcenter_password }}"
       esxi_hostname: "{{ esxi_hostname }}"
       validate_certs: no
-      switch: "{{ student_ID }}"
-      portgroup: "{{ student_ID + '-SB-Storage' }}"
+      switch: "{{ student_id }}"
+      portgroup: "{{ student_id + '-SB-Storage' }}"
       security:
         promiscuous_mode: True
         mac_changes: True
@@ -100,8 +100,8 @@
       password: "{{ vcenter_password }}"
       esxi_hostname: "{{ esxi_hostname }}"
       validate_certs: no
-      switch: "{{ student_ID }}"
-      portgroup: "{{ student_ID + '-SB-vMotion' }}"
+      switch: "{{ student_id }}"
+      portgroup: "{{ student_id + '-SB-vMotion' }}"
       security:
         promiscuous_mode: True
         mac_changes: True
@@ -116,8 +116,8 @@
       password: "{{ vcenter_password }}"
       esxi_hostname: "{{ esxi_hostname }}"
       validate_certs: no
-      switch: "{{ student_ID }}"
-      portgroup: "{{ student_ID + '-SC-Mgmt' }}"
+      switch: "{{ student_id }}"
+      portgroup: "{{ student_id + '-SC-Mgmt' }}"
       vlan_id: 30
       security:
         promiscuous_mode: True
@@ -133,8 +133,8 @@
       password: "{{ vcenter_password }}"
       esxi_hostname: "{{ esxi_hostname }}"
       validate_certs: no
-      switch: "{{ student_ID }}"
-      portgroup: "{{ student_ID + '-vSAN' }}"
+      switch: "{{ student_id }}"
+      portgroup: "{{ student_id + '-vSAN' }}"
       security:
         promiscuous_mode: True
         mac_changes: True
@@ -149,8 +149,8 @@
       password: "{{ vcenter_password }}"
       esxi_hostname: "{{ esxi_hostname }}"
       validate_certs: no
-      switch: "{{ student_ID }}"
-      portgroup: "{{ student_ID + '-Trunk' }}"
+      switch: "{{ student_id }}"
+      portgroup: "{{ student_id + '-Trunk' }}"
       vlan_id: 4095
       security:
         promiscuous_mode: True
