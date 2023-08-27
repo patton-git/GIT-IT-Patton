@@ -1,0 +1,42 @@
+---
+- hosts: localhost
+  gather_facts: no
+#  vars_files: ./vars.yaml
+  vars:
+    ansible_python_interpreter: /bin/python3
+    vcenter_hostname: "172.0.10.10"
+    vcenter_username: "s00@edu.git"
+    vcenter_password: "VMware1!"
+    datacenter_name: "Datacenter"
+    student_id: "S00"
+    esxi_hostname: "172.0.10.13"
+
+  tasks: 
+# https://docs.ansible.com/ansible/latest/collections/community/vmware/vmware_portgroup_module.html
+  - name: Adding Portgroups to LAB Switch
+    community.vmware.vmware_portgroup:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      esxi_hostname: "{{ esxi_hostname }}"
+      validate_certs: no
+      switch: "{{ student_ID }}"
+      portgroup: "{{ student_ID + item.portgroup }}"
+      security:
+        promiscuous_mode: True
+        mac_changes: True
+        forged_transmits: True
+      vlan_id: '{{ item.vlan }}
+    loop:
+    - { portgroup: "-SA-Mgmt", vlan: 10 }
+    - { portgroup: "-SA-Storage", vlan: 11 }
+    - { portgroup: "-SA-vMotion", vlan: 12 }
+    - { portgroup: "-SA-Prod", vlan: 13 }
+    - { portgroup: "-SB-Mgmt", vlan: 20 }
+    - { portgroup: "-SB-Storage", vlan: 21 }
+    - { portgroup: "-SB-vMotion", vlan: 22 }
+    - { portgroup: "-SB-Prod", vlan: 23 }
+    - { portgroup: "-SC-Mgmt", vlan: 30 }
+    - { portgroup: "-vSAN", vlan: 100 }    
+    - { portgroup: "-Trunk", vlan: 4095 }
+    delegate_to: localhost
