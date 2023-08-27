@@ -1,0 +1,28 @@
+---
+- hosts: localhost
+  gather_facts: no
+
+#  vars_files: ./vars.yaml
+  vars:
+    ansible_python_interpreter: /bin/python3
+    vcenter_hostname: "172.0.10.10"
+    vcenter_username: "s00@edu.git"
+    vcenter_password: "VMware1!"
+    datacenter_name: "Datacenter"
+    student_id: "S00"
+
+  tasks: 
+# https://docs.ansible.com/ansible/latest/collections/community/vmware/vmware_vswitch_module.html  
+  - name: 02. Create Project Standard vSwitch
+    community.vmware.vmware_vswitch:
+      hostname: '{{ esxi_hostname }}'
+      username: '{{ esxi_username }}'
+      password: '{{ esxi_password }}'
+      validate_certs: false
+      switch: '{{ student_id }}'
+    delegate_to: localhost
+
+  - name: waiting vswitch creating
+    wait_for:
+      timeout: 10
+    delegate_to: localhost
