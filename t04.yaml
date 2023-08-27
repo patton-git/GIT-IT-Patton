@@ -11,14 +11,13 @@
     parent_folder: "1.Internal-Training/Students"
     student_id: "S00"
     esxi_hostname: "172.0.10.13"
-  
-    public_net:  "VM-172.16.1.x"
+    public_net:  "DPG-172.0.10.x"
     private_net: "{{ student_id + '-Trunk' }}"
     datastore_name: "vsanDatastore"
 
   tasks: 
 # https://docs.ansible.com/ansible/latest/collections/community/vmware/vmware_deploy_ovf_module.html  
-  - name: 04. Deploy VyOS OVA Template
+  - name: 04. Deploy Router(VyOS) OVA
     community.vmware.vmware_deploy_ovf:
       hostname: '{{ vcenter_hostname }}'
       username: '{{ vcenter_username }}'
