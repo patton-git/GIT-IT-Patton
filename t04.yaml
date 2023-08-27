@@ -33,7 +33,7 @@
       ovf: /mnt/c/Material/temp-vyos-1.4.ova    
     delegate_to: localhost
 
-- name: waiting Router Booting
-  wait_for:
-    timeout: 60
-  delegate_to: localhost
+  - name: waiting Router Booting
+    wait_for:
+      timeout: 60
+    delegate_to: localhost
