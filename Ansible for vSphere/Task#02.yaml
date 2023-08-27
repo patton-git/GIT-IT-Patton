@@ -5,7 +5,7 @@
 #  vars_files: ./vars.yaml
   vars:
     ansible_python_interpreter: /bin/python3
-    esxi_hostname: "172.0.10.13"
+    esxi_hostname: ""
     esxi_username: "root"
     esxi_password: "VMware1!"
     student_id: "S00"
@@ -14,12 +14,7 @@
 # https://docs.ansible.com/ansible/latest/collections/community/vmware/vmware_vswitch_module.html  
   - name: 02. Create Project Standard vSwitch
     community.vmware.vmware_vswitch:
-      hostname: '{{ esxi_hostname }}'
-      username: '{{ esxi_username }}'
-      password: '{{ esxi_password }}'
-      validate_certs: false
-      switch: '{{ student_id }}'
-    delegate_to: localhost
+
 
   - name: waiting vswitch creating
     wait_for:
