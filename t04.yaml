@@ -1,0 +1,39 @@
+---
+- hosts: localhost
+  gather_facts: no
+#  vars_files: ./vars.yaml
+  vars:
+    ansible_python_interpreter: /bin/python3
+    vcenter_hostname: "172.0.10.10"
+    vcenter_username: "s00@edu.git"
+    vcenter_password: "VMware1!"
+    datacenter_name: "Datacenter"
+    parent_folder: "1.Internal-Training/Students"
+    student_id: "S00"
+    esxi_hostname: "172.0.10.13"
+  
+    public_net:  "VM-172.16.1.x"
+    private_net: "{{ student_id + '-Trunk' }}"
+    datastore_name: "vsanDatastore"
+
+  tasks: 
+# https://docs.ansible.com/ansible/latest/collections/community/vmware/vmware_deploy_ovf_module.html  
+  - name: 04. Deploy VyOS OVA Template
+    community.vmware.vmware_deploy_ovf:
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      validate_certs: 'false'
+      datacenter: '{{ datacenter_name }}'
+      folder: "{{ parent_folder + '/' + student_id }}"
+      esxi_hostname: '{{ esxi_hostname }}'
+      datastore: '{{ datastore_name }}'
+      name: "{{ student_id + '-Router' }}"
+      networks: { 'Lab-Outside': "{{ public_net }}", 'Lab-Inside': "{{ private_net }}" }
+      ovf: /mnt/c/Material/temp-vyos-1.4.ova    
+    delegate_to: localhost
+
+- name: waiting Router Booting
+  wait_for:
+    timeout: 60
+  delegate_to: localhost
