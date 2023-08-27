@@ -20,8 +20,9 @@
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       validate_certs: no
-      name: "{{ student_id + '-DC' }}"
-      state: "absent"
       datacenter: '{{ datacenter_name }}'
       folder: "{{ folder_name }}"
+      name: "{{ student_id + '-DC' }}"
+      state: "absent"
+      force: true
     delegate_to: localhost
