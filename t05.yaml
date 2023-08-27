@@ -9,6 +9,7 @@
     vcenter_password: "VMware1!"
     datacenter_name: "Datacenter"
     parent_folder: "1.Internal-Training/Students"
+    student_id: "S00"
     folder_name: "{{ datacenter_name + '/vm/' + parent_folder + '/' + student_id }}"
 
   tasks: 
