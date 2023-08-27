@@ -24,7 +24,7 @@
       validate_certs: 'false'
       datacenter: '{{ datacenter_name }}'
       folder: '{{ folder_name }}'
-      vm_id: "{{ project_id + '-Router' }}"
+      vm_id: "{{ student_id + '-Router' }}"
       vm_id_type: vm_name
       vm_username: 'vyos'
       vm_password: 'vyos'
