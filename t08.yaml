@@ -20,7 +20,7 @@
       username: '{{ vcenter_username }}'
       password: '{{ vcenter_password }}'
       validate_certs: 'false'
-      vm_id: "{{ student_ID + '-DC' }}"
+      vm_id: "{{ student_id + '-DC' }}"
       vm_id_type: vm_name
       vm_username: 'Administrator'
       vm_password: 'VMware1!'
@@ -29,8 +29,8 @@
         dest: '{{ item.dst }}'
         overwrite: true
     loop:    
-    - {src: "/mnt/c/ansible/Add_dns_records.ps1", dst: "c:\\Material\\Add_dns_records.ps1" }
-    - {src: "/mnt/c/ansible/Add_ad_users.ps1", dst: "c:\\Material\\Add_ad_users.ps1" }
+    - {src: "/mnt/c/Material/Add_dns_records.ps1", dst: "c:\\Material\\Add_dns_records.ps1" }
+    - {src: "/mnt/c/Material/Add_ad_users.ps1", dst: "c:\\Material\\Add_ad_users.ps1" }
     delegate_to: localhost
 
   - name: Run dns powershell script
@@ -39,7 +39,7 @@
       username: '{{ vcenter_username }}'
       password: '{{ vcenter_password }}'
       validate_certs: 'false'
-      vm_id: "{{ student_ID + '-DC' }}"
+      vm_id: "{{ student_id + '-DC' }}"
       vm_id_type: vm_name
       vm_username: 'Administrator'
       vm_password: 'VMware1!'
@@ -59,7 +59,7 @@
       username: '{{ vcenter_username }}'
       password: '{{ vcenter_password }}'
       validate_certs: 'false'
-      vm_id: "{{ student_ID + '-DC' }}"
+      vm_id: "{{ student_id + '-DC' }}"
       vm_id_type: vm_name
       vm_username: 'Administrator'
       vm_password: 'VMware1!'
