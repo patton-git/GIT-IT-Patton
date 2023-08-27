@@ -26,7 +26,7 @@
         promiscuous_mode: True
         mac_changes: True
         forged_transmits: True
-      vlan_id: '{{ item.vlan }}
+      vlan_id: '{{ item.vlan }}'
     loop:
     - { portgroup: "-SA-Mgmt", vlan: 10 }
     - { portgroup: "-SA-Storage", vlan: 11 }
