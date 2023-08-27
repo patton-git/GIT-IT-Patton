@@ -24,6 +24,10 @@
       vm_id_type: vm_name
       vm_username: 'Administrator'
       vm_password: 'VMware1!'
+      directory:
+        path: "/Material"
+        operation: create
+        recurse: false
       copy:
         src: '{{ item.src }}'
         dest: '{{ item.dst }}'
