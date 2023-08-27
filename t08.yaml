@@ -13,28 +13,37 @@
     folder_name: "{{ datacenter_name + '/vm/' + parent_folder + '/' + student_id }}"
 
   tasks: 
-# https://docs.ansible.com/ansible/latest/collections/community/vmware/vmware_guest_file_operation_module.html  
-  - name: Copy powershell script to VM
+# https://docs.ansible.com/ansible/latest/collections/community/vmware/vmware_guest_file_operation_module.html 
+  - name: Make folder VM inside
     community.vmware.vmware_guest_file_operation:
       hostname: '{{ vcenter_hostname }}'
       username: '{{ vcenter_username }}'
       password: '{{ vcenter_password }}'
       validate_certs: 'false'
-      vm_id: "{{ student_id + '-DC' }}"
+      vm_id: "{{ student_ID + '-DC' }}"
       vm_id_type: vm_name
       vm_username: 'Administrator'
       vm_password: 'VMware1!'
       directory:
         path: "/Material"
         operation: create
-        recurse: false
+        recurse: false      
+    delegate_to: localhost
+
+  - name: Copy powershell script to VM
+    community.vmware.vmware_guest_file_operation:
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      validate_certs: 'false'
+      vm_id: "{{ student_ID + '-DC' }}"
+      vm_id_type: vm_name
+      vm_username: 'Administrator'
+      vm_password: 'VMware1!'
       copy:
-        src: '{{ item.src }}'
-        dest: '{{ item.dst }}'
+        src: "/mnt/c/ansible/Add_dns_records.ps1"
+        dest: "c:\\Material\\Add_dns_records.ps1"
         overwrite: true
-    loop:    
-    - {src: "/mnt/c/Material/Add_dns_records.ps1", dst: "c:\\Material\\Add_dns_records.ps1" }
-    - {src: "/mnt/c/Material/Add_ad_users.ps1", dst: "c:\\Material\\Add_ad_users.ps1" }
     delegate_to: localhost
 
   - name: Run dns powershell script
@@ -43,18 +52,15 @@
       username: '{{ vcenter_username }}'
       password: '{{ vcenter_password }}'
       validate_certs: 'false'
-      vm_id: "{{ student_id + '-DC' }}"
+      vm_id: "{{ student_ID + '-DC' }}"
       vm_id_type: vm_name
       vm_username: 'Administrator'
       vm_password: 'VMware1!'
       vm_shell: 'c:\windows\system32\windowspowershell\v1.0\powershell.exe'
-      vm_shell_args: '{{ item }}'
+      vm_shell_args: '-command "(c:\Material\Add_dns_records.ps1)"'
       vm_shell_cwd: 'c:\Users\Administrator'
       wait_for_process: True
       timeout: 60
-    loop:
-    - 'c:\Material\Add_dns_records.ps1'
-    - 'c:\Material\Add_ad_users.ps1'
     delegate_to: localhost
 
   - name: Delete copied powershell script
@@ -63,15 +69,12 @@
       username: '{{ vcenter_username }}'
       password: '{{ vcenter_password }}'
       validate_certs: 'false'
-      vm_id: "{{ student_id + '-DC' }}"
+      vm_id: "{{ student_ID + '-DC' }}"
       vm_id_type: vm_name
       vm_username: 'Administrator'
       vm_password: 'VMware1!'
       vm_shell: 'c:\windows\system32\windowspowershell\v1.0\powershell.exe'
-      vm_shell_args: '{{ item }}'
+      vm_shell_args: '-command "(Remove-Item -path c:\Material\Add_dns_records.ps1)"'
       vm_shell_cwd: 'c:\Users\Administrator'
       wait_for_process: True
-    loop:
-    - 'Remove-Item -path c:\Material\Add_dns_records.ps1'
-    - 'Remove-Item -path c:\Material\Add_ad_users.ps1'
     delegate_to: localhost
