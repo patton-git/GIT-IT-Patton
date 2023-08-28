@@ -101,3 +101,87 @@
     wait_for:
       timeout: 60
     delegate_to: localhost    
+
+
+# https://docs.ansible.com/ansible/latest/collections/community/vmware/vmware_vm_shell_module.html
+# https://docs.vyos.io/en/latest/automation/command-scripting.html
+# https://docs.vyos.io/en/latest/quick-start.html#configuration-mode
+  - name: 05. Configure Router(VyOS)
+    community.vmware.vmware_vm_shell:
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      validate_certs: 'false'
+      datacenter: '{{ datacenter_name }}'
+      folder: '{{ folder_name }}'
+      vm_id: "{{ student_id + '-Router' }}"
+      vm_id_type: vm_name
+      vm_username: 'vyos'
+      vm_password: 'vyos'
+      vm_shell: /bin/vbash
+      vm_shell_cwd: "/tmp"
+      vm_shell_args: |-
+        -c "source /opt/vyatta/etc/functions/script-template
+        configure
+          set system login user admin full-name Admin_User
+          set system login user admin authentication plaintext-password VMware1!
+          set service ssh port 22
+            
+          set system ipv6 disable
+          
+          set interfaces ethernet eth0 address dhcp
+          set interfaces ethernet eth0 description Outside
+          set interfaces ethernet eth0 ipv6 address no-default-link-local
+          set protocols static route 0.0.0.0/0 next-hop 172.0.10.1
+
+          set interfaces ethernet eth1 vif 10 description 'VLAN 10 - Site A Management'
+          set interfaces ethernet eth1 vif 10 address 10.10.10.1/24
+          set interfaces ethernet eth1 vif 10 ipv6 address no-default-link-local
+          set interfaces ethernet eth1 vif 11 description 'VLAN 11 - Site A Storage'
+          set interfaces ethernet eth1 vif 11 address 10.10.11.1/24
+          set interfaces ethernet eth1 vif 11 ipv6 address no-default-link-local
+          set interfaces ethernet eth1 vif 12 description 'VLAN 12 - Site A vMotion'
+          set interfaces ethernet eth1 vif 12 address 10.10.12.1/24
+          set interfaces ethernet eth1 vif 12 ipv6 address no-default-link-local
+          set interfaces ethernet eth1 vif 13 description 'VLAN 13 - Site A Production'
+          set interfaces ethernet eth1 vif 13 address 10.10.13.1/24
+          set interfaces ethernet eth1 vif 13 ipv6 address no-default-link-local
+
+          set interfaces ethernet eth1 vif 20 description 'VLAN 20 - Site B Management'
+          set interfaces ethernet eth1 vif 20 address 10.10.20.1/24
+          set interfaces ethernet eth1 vif 20 ipv6 address no-default-link-local
+          set interfaces ethernet eth1 vif 21 description 'VLAN 21 - Site B Storage'
+          set interfaces ethernet eth1 vif 21 address 10.10.21.1/24
+          set interfaces ethernet eth1 vif 21 ipv6 address no-default-link-local
+          set interfaces ethernet eth1 vif 22 description 'VLAN 22 - Site B vMotion'
+          set interfaces ethernet eth1 vif 22 address 10.10.22.1/24
+          set interfaces ethernet eth1 vif 22 ipv6 address no-default-link-local
+          set interfaces ethernet eth1 vif 23 description 'VLAN 23 - Site B Production'
+          set interfaces ethernet eth1 vif 23 address 10.10.23.1/24
+          set interfaces ethernet eth1 vif 23 ipv6 address no-default-link-local
+
+          set interfaces ethernet eth1 vif 30 description 'VLAN 30 - SiteC Management'
+          set interfaces ethernet eth1 vif 30 address 10.10.30.1/24
+          set interfaces ethernet eth1 vif 30 ipv6 address no-default-link-local
+
+          set interfaces ethernet eth1 vif 100 description 'VLAN 100 - vSAN'
+          set interfaces ethernet eth1 vif 100 address 10.10.100.1/24
+          set interfaces ethernet eth1 vif 100 ipv6 address no-default-link-local
+
+          set system name-server 172.0.10.2
+          set service ntp server kr.pool.ntp.org
+                      
+          set nat source rule 10 outbound-interface eth0
+          set nat source rule 10 source address 10.10.10.0/24
+          set nat source rule 10 translation address masquerade
+
+          set nat source rule 13 outbound-interface eth0
+          set nat source rule 13 source address 10.10.13.0/24
+          set nat source rule 13 translation address masquerade
+          
+        commit
+        save"
+      wait_for_process: True
+      timeout: 180
+    delegate_to: localhost
+    register: shell_command_with_wait_timeout        
