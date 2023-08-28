@@ -1,1 +1,29 @@
 
+---
+- hosts: localhost
+  gather_facts: no
+
+#  vars_files: ./vars.yaml
+  vars:
+    ansible_python_interpreter: /bin/python3
+    vcenter_hostname: "172.0.10.10"
+    vcenter_username: "s00@edu.git"
+    vcenter_password: "VMware1!"
+    datacenter_name: "Datacenter"
+    student_id: "S00"
+    parent_folder: "1.Internal-Training/Students"
+
+  tasks: 
+# https://docs.ansible.com/ansible/latest/collections/community/vmware/vcenter_folder_module.html  
+  - name: 01. Create a Project folder
+    community.vmware.vcenter_folder:
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      validate_certs: false
+      datacenter_name: '{{ datacenter_name }}'
+      folder_name: '{{ student_id }}'
+      parent_folder: '{{ parent_folder }}'
+      state: present
+    register: sub_folder_creation_result
+    delegate_to: localhost
