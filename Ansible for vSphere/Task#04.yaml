@@ -26,6 +26,7 @@
       validate_certs: 'false'
       datacenter: '{{ datacenter_name }}'
       folder: "{{ folder_name }}"
+      name: "{{ student_id + '-Router' }}"
       esxi_hostname: '{{ esxi_hostname }}'
       datastore: '{{ datastore_name }}'
       name: "{{ student_id + '-Router' }}"
