@@ -13,8 +13,9 @@
     folder_name: "{{ datacenter_name + '/vm/' + parent_folder + '/' + student_id }}"
 
   tasks: 
-# https://docs.ansible.com/ansible/latest/collections/community/vmware/vmware_guest_file_operation_module.html  
-  - name: Make folder VM inside
+# https://docs.ansible.com/ansible/latest/collections/community/vmware/vmware_guest_file_operation_module.html
+# DC VM 내부에 C:\Material Folder 만들기
+  - name: Make folder VM inside    
     community.vmware.vmware_guest_file_operation:
       hostname: '{{ vcenter_hostname }}'
       username: '{{ vcenter_username }}'
@@ -24,12 +25,10 @@
       vm_id_type: vm_name
       vm_username: 'Administrator'
       vm_password: 'VMware1!'
-      directory:
-        path: "/Material"
-        operation: create
-        recurse: false      
+
     delegate_to: localhost
 
+# DC VM 내부에 만들어진 /Material 폴더에 PowerShell Script 파일 복사하기
   - name: Copy powershell script to VM
     community.vmware.vmware_guest_file_operation:
       hostname: '{{ vcenter_hostname }}'
@@ -41,14 +40,13 @@
       vm_username: 'Administrator'
       vm_password: 'VMware1!'
       copy:
-        src: '{{ item.src }}'
-        dest: '{{ item.dst }}'
+        src: 
+        dest: 
         overwrite: true
-    loop:    
-    - {src: "/mnt/c/Material/Add_dns_records.ps1", dst: "c:\\Material\\Add_dns_records.ps1" }
-    - {src: "/mnt/c/Material/Add_ad_users.ps1", dst: "c:\\Material\\Add_ad_users.ps1" }
+
     delegate_to: localhost
 
+# 복사된 PowerShell 스크립트 파일 실행시키기
   - name: Run dns powershell script
     community.vmware.vmware_vm_shell:
       hostname: '{{ vcenter_hostname }}'
@@ -60,15 +58,14 @@
       vm_username: 'Administrator'
       vm_password: 'VMware1!'
       vm_shell: 'c:\windows\system32\windowspowershell\v1.0\powershell.exe'
-      vm_shell_args: '{{ item }}'
+      vm_shell_args: 
       vm_shell_cwd: 'c:\Users\Administrator'
       wait_for_process: True
       timeout: 60
-    loop:
-    - 'c:\Material\Add_dns_records.ps1'
-    - 'c:\Material\Add_ad_users.ps1'
+
     delegate_to: localhost
 
+# VM_Shell 으로는 파일 복사 / 디렉토리 생성만 가능함. Powershell을 이용하여 실행된 Script 파일을 삭제하기
   - name: Delete copied powershell script
     community.vmware.vmware_vm_shell:
       hostname: '{{ vcenter_hostname }}'
@@ -80,10 +77,8 @@
       vm_username: 'Administrator'
       vm_password: 'VMware1!'
       vm_shell: 'c:\windows\system32\windowspowershell\v1.0\powershell.exe'
-      vm_shell_args: '{{ item }}'
+      vm_shell_args: 
       vm_shell_cwd: 'c:\Users\Administrator'
       wait_for_process: True
-    loop:
-    - 'Remove-Item -path c:\Material\Add_dns_records.ps1'
-    - 'Remove-Item -path c:\Material\Add_ad_users.ps1'
+
     delegate_to: localhost
