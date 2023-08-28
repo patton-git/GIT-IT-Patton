@@ -15,6 +15,10 @@
     esxi_hostname: "172.0.10.13"
     esxi_username: "root"
     esxi_password: "VMware1!"
+    public_net:  "DPG-172.0.10.x"
+    private_net: "{{ student_id + '-Trunk' }}"
+    datastore_name: "vsanDatastore"
+    folder_name: "{{ datacenter_name + '/vm/' + parent_folder + '/' + student_id }}"
 
 
   tasks: 
@@ -78,4 +82,22 @@
     delegate_to: localhost
 
 
-    
+  - name: 04. Deploy Router(VyOS) OVA
+    community.vmware.vmware_deploy_ovf:
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      validate_certs: 'false'
+      datacenter: '{{ datacenter_name }}'
+      folder: "{{ folder_name }}"
+      esxi_hostname: '{{ esxi_hostname }}'
+      datastore: '{{ datastore_name }}'
+      name: "{{ student_id + '-Router' }}"
+      networks: { 'Lab-Outside': "{{ public_net }}", 'Lab-Inside': "{{ private_net }}" }
+      ovf: /mnt/c/Material/temp-vyos-1.4.ova    
+    delegate_to: localhost
+
+  - name: waiting Router Booting
+    wait_for:
+      timeout: 60
+    delegate_to: localhost    
