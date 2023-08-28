@@ -14,6 +14,7 @@
     public_net:  "DPG-172.0.10.x"
     private_net: "{{ student_id + '-Trunk' }}"
     datastore_name: "vsanDatastore"
+    folder_name: "{{ datacenter_name + '/vm/' + parent_folder + '/' + student_id }}"
 
   tasks: 
 # https://docs.ansible.com/ansible/latest/collections/community/vmware/vmware_deploy_ovf_module.html  
@@ -24,7 +25,7 @@
       password: '{{ vcenter_password }}'
       validate_certs: 'false'
       datacenter: '{{ datacenter_name }}'
-      folder: "{{ datacenter_name + '/vm/' + parent_folder + '/' + student_id }}"
+      folder: "{{ folder_name }}"
       esxi_hostname: '{{ esxi_hostname }}'
       datastore: '{{ datastore_name }}'
       name: "{{ student_id + '-Router' }}"
