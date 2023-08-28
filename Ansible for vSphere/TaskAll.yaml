@@ -12,6 +12,10 @@
     datacenter_name: "Datacenter"
     student_id: "S00"
     parent_folder: "1.Internal-Training/Students"
+    esxi_hostname: "172.0.10.13"
+    esxi_username: "root"
+    esxi_password: "VMware1!"
+
 
   tasks: 
 # https://docs.ansible.com/ansible/latest/collections/community/vmware/vcenter_folder_module.html  
@@ -26,4 +30,20 @@
       parent_folder: '{{ parent_folder }}'
       state: present
     register: sub_folder_creation_result
+    delegate_to: localhost
+
+
+# https://docs.ansible.com/ansible/latest/collections/community/vmware/vmware_vswitch_module.html  
+  - name: 02. Create Project Standard vSwitch
+    community.vmware.vmware_vswitch:
+      hostname: '{{ esxi_hostname }}'
+      username: '{{ esxi_username }}'
+      password: '{{ esxi_password }}'
+      validate_certs: false
+      switch: '{{ student_id }}'
+    delegate_to: localhost
+
+  - name: waiting vswitch creating
+    wait_for:
+      timeout: 10
     delegate_to: localhost
