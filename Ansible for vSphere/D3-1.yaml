@@ -21,10 +21,24 @@
     dc_template_name: "temp-ad.vclass.local"
     esxi_template_name: "Temp-ESXi"
     snapshot_name: "linked"
-    SA_ESXi_VMs: [ student_id + 'SA-ESXi-01', student_id + 'SA-ESXi-02', student_id + 'SA-ESXi-03', student_id + 'SA-ESXi-04' ]
-    SB_ESXi_VMs: [ student_id + 'SB-ESXi-01', student_id + 'SB-ESXi-02', student_id + 'SB-ESXi-03', student_id + 'SB-ESXi-04' ]
+    SA_ESXi_VMs:
+      - "{{ student_id + 'SA-ESXi-01' }}"
+      - "{{ student_id + 'SA-ESXi-02' }}"
+      - "{{ student_id + 'SA-ESXi-03' }}"
+      - "{{ student_id + 'SA-ESXi-04' }}"
+    SB_ESXi_VMs:
+      - "{{ student_id + 'SB-ESXi-01' }}"
+      - "{{ student_id + 'SB-ESXi-02' }}"
+      - "{{ student_id + 'SB-ESXi-03' }}"
+      - "{{ student_id + 'SB-ESXi-04' }}"
     Mgmt_NICs: [ "Network adapter 1", "Network adapter 2" ]
     Trunk_NICs: [ "Network adapter 3", "Network adapter 4" ]
+    NVMe_Disks:
+      - "{{ unit: 0, size: 40 }}"
+      - "{{ unit: 1, size: 40 }}"
+      - "{{ unit: 2, size: 200 }}"
+      - "{{ unit: 3, size: 200 }}"
+      
 
   tasks: 
   - name: Clone multiple esxi vms from Template
@@ -40,17 +54,8 @@
       esxi_hostname: '{{ esxi_hostname }}'
       datastore: "{{ datastore_name }}"
       template: '{{ esxi_template_name }}'
-    loop: "{{ SA_ESXi_VMs, SB_ESXi_VMs }}"
-#      - "{{student_ID+'-SA-ESXi-01'}}"
-#      - "{{student_ID+'-SA-ESXi-02'}}"
-#      - "{{student_ID+'-SA-ESXi-03'}}"
-#      - "{{student_ID+'-SA-ESXi-04'}}"
-#      - "{{student_ID+'-SB-ESXi-01'}}"
-#      - "{{student_ID+'-SB-ESXi-02'}}"
-#      - "{{student_ID+'-SB-ESXi-03'}}"
-#      - "{{student_ID+'-SB-ESXi-04'}}"
+    loop: "{{ SA_ESXi_VMs + SB_ESXi_VMs }}"
     delegate_to: localhost
-
 
   - name: Change vCPU, vRAM
     community.vmware.vmware_guest:
@@ -63,17 +68,8 @@
       hardware:
         memory_mb: 16384
         num_cpus: 4
-    loop: "{{ SA_ESXi_VMs, SB_ESXi_VMs }}"
-#      - "{{student_ID+'-SA-ESXi-01'}}"
-#      - "{{student_ID+'-SA-ESXi-02'}}"
-#      - "{{student_ID+'-SA-ESXi-03'}}"
-#      - "{{student_ID+'-SA-ESXi-04'}}"
-#      - "{{student_ID+'-SB-ESXi-01'}}"
-#      - "{{student_ID+'-SB-ESXi-02'}}"
-#      - "{{student_ID+'-SB-ESXi-03'}}"
-#      - "{{student_ID+'-SB-ESXi-04'}}"
+    loop: "{{ SA_ESXi_VMs + SB_ESXi_VMs }}"
     delegate_to: localhost
-
 
   - name: Adding vSAN NVMe Disks
     community.vmware.vmware_guest_disk:
@@ -82,37 +78,29 @@
       password: "{{ vcenter_password }}"
       validate_certs: no
       datacenter: "{{ datacenter_name }}"
-      name: "{{ item }}"
+      name: "{{ item.[0] }}"
       disk:
-        - size_gb: 40
+        - size_gb: {{ item.[1].[size] }}
           state: present
           controller_type: nvme
           controller_number: 0
-          unit_number: 0
-        - size_gb: 40
-          state: present
-          controller_type: nvme
-          controller_number: 0
-          unit_number: 1
-        - size_gb: 200
-          state: present
-          controller_type: nvme
-          controller_number: 0
-          unit_number: 2
-        - size_gb: 200
-          state: present
-          controller_type: nvme
-          controller_number: 0
-          unit_number: 3
-    loop: "{{ SA_ESXi_VMs, SB_ESXi_VMs }}"
-#      - "{{student_ID+'-SA-ESXi-01'}}"
-#      - "{{student_ID+'-SA-ESXi-02'}}"
-#      - "{{student_ID+'-SA-ESXi-03'}}"
-#      - "{{student_ID+'-SA-ESXi-04'}}"
-#      - "{{student_ID+'-SB-ESXi-01'}}"
-#      - "{{student_ID+'-SB-ESXi-02'}}"
-#      - "{{student_ID+'-SB-ESXi-03'}}"
-#      - "{{student_ID+'-SB-ESXi-04'}}"
+          unit_number: {{ item.[1].[unit] }}
+#        - size_gb: 40
+#          state: present
+#          controller_type: nvme
+#          controller_number: 0
+#          unit_number: 1
+#        - size_gb: 200
+#          state: present
+#          controller_type: nvme
+#          controller_number: 0
+#          unit_number: 2
+#        - size_gb: 200
+#          state: present
+#          controller_type: nvme
+#          controller_number: 0
+#          unit_number: 3
+    loop: "{{ SA_ESXi_VMs + SB_ESXi_VMs | product(NVMe_Disks) | list }}"
     delegate_to: localhost
 
 
@@ -183,15 +171,7 @@
       validate_certs: no
       name: "{{ item }}"
       state: "poweredon"
-    loop: "{{ SA_ESXi_VMs, SB_ESXi_VMs }}"
-#      - "{{student_ID+'-SA-ESXi-01'}}"
-#      - "{{student_ID+'-SA-ESXi-02'}}"
-#      - "{{student_ID+'-SA-ESXi-03'}}"
-#      - "{{student_ID+'-SA-ESXi-04'}}"
-#      - "{{student_ID+'-SB-ESXi-01'}}"
-#      - "{{student_ID+'-SB-ESXi-02'}}"
-#      - "{{student_ID+'-SB-ESXi-03'}}"
-#      - "{{student_ID+'-SB-ESXi-04'}}"
+    loop: "{{ SA_ESXi_VMs + SB_ESXi_VMs }}"
     delegate_to: localhost
  
   - name: Waiting boot-up
@@ -284,13 +264,5 @@
       folder: "{{ full_folder_prefix + student_ID }}"
       name: "{{ item }}"
       state: reboot-guest
-    loop: "{{ SA_ESXi_VMs, SB_ESXi_VMs }}"
-#      - "{{student_ID+'-SA-ESXi-01'}}"
-#      - "{{student_ID+'-SA-ESXi-02'}}"
-#      - "{{student_ID+'-SA-ESXi-03'}}"
-#      - "{{student_ID+'-SA-ESXi-04'}}"
-#      - "{{student_ID+'-SB-ESXi-01'}}"
-#      - "{{student_ID+'-SB-ESXi-02'}}"
-#      - "{{student_ID+'-SB-ESXi-03'}}"
-#      - "{{student_ID+'-SB-ESXi-04'}}"
+    loop: "{{ SA_ESXi_VMs + SB_ESXi_VMs }}"
     delegate_to: localhost
