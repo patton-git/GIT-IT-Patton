@@ -19,7 +19,7 @@
     datastore_name: "vsanDatastore"
     folder_name: "{{ datacenter_name + '/vm/' + parent_folder + '/' + student_id }}"
     dc_template_name: "temp-ad.vclass.local"
-    esxi_template_name: "Temp-ESXi"
+    esxi_template_name: "Temp-vSAN-ESXi"
     snapshot_name: "linked"
     SA_ESXi_VMs:
       - "{{ student_id + '-SA-ESXi-01' }}"
