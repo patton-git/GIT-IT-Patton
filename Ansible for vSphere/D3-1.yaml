@@ -20,6 +20,7 @@
     folder_name: "{{ datacenter_name + '/vm/' + parent_folder + '/' + student_id }}"
     dc_template_name: "temp-ad.vclass.local"
     esxi_template_name: "Temp-vSAN-ESXi"
+    vcsa_template_name: "sa-vcsa-01.vclass.local"
     snapshot_name: "linked"
     SA_ESXi_VMs:
       - "{{ student_id + '-SA-ESXi-01' }}"
@@ -260,4 +261,45 @@
       name: "{{ item }}"
       state: reboot-guest
     loop: "{{ SA_ESXi_VMs + SB_ESXi_VMs }}"
+    delegate_to: localhost
+
+  - name: Deploy vCenter Server Appliance VM from Template
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ student_id + '-VCSA' }}"
+      state: "poweredoff"
+      datacenter: '{{ datacenter_name }}'
+      folder: "{{ folder_name }}"
+      esxi_hostname: '{{ esxi_hostname }}'
+      datastore: "{{ datastore_name }}"
+      template: "{{ vcsa_template_name }}"
+      linked_clone: True
+      snapshot_src: "{{ snapshot_name }}"
+    delegate_to: localhost
+
+  - name: Change Network Interfaces
+    community.vmware.vmware_guest_network:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ student_id + '-VCSA' }}"
+      label: "Network adapter 1"
+      network_name: "{{ student_id + '-SA-Mgmt' }}"
+      state: present
+      force: yes
+    delegate_to: localhost
+
+  - name: Poweron VCSA VM
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ student_id + '-VCSA' }}"
+      state: "poweredon"
+      state_change_timeout: 60
     delegate_to: localhost
