@@ -73,7 +73,7 @@
       password: "{{ vcenter_password }}"
       validate_certs: no
       datacenter: "{{ datacenter_name }}"
-      name: "{{ item.[0] }}"
+      name: "{{ item }}"
       disk:
         - size_gb: 40
           state: present
