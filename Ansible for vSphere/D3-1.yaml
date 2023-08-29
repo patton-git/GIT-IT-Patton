@@ -257,7 +257,7 @@
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       validate_certs: 'false'        
-      folder: "{{ full_folder_prefix + student_id }}"
+      folder: "{{ folder_name }}"
       name: "{{ item }}"
       state: reboot-guest
     loop: "{{ SA_ESXi_VMs + SB_ESXi_VMs }}"
