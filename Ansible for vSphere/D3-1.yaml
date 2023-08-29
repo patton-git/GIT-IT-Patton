@@ -220,7 +220,7 @@
       password: '{{ vcenter_password }}'
       validate_certs: 'false'
       datacenter: '{{ datacenter_name }}'
-      folder: "{{ full_folder_prefix }}"
+      folder: "{{ folder_name }}"
       vm_id: "{{ item.vm_name }}"
       vm_id_type: vm_name
       vm_username: 'root'
