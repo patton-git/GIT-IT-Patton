@@ -75,11 +75,11 @@
       datacenter: "{{ datacenter_name }}"
       name: "{{ item.[0] }}"
       disk:
-        - size_gb: "{{ item.[1].[size] }}"
+        - size_gb: 40
           state: present
           controller_type: nvme
           controller_number: 0
-          unit_number: "{{ item.[1].[unit] }}"
+          unit_number: 0
         - size_gb: 40
           state: present
           controller_type: nvme
