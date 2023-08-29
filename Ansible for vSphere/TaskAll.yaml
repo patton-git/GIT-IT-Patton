@@ -19,6 +19,8 @@
     private_net: "{{ student_id + '-Trunk' }}"
     datastore_name: "vsanDatastore"
     folder_name: "{{ datacenter_name + '/vm/' + parent_folder + '/' + student_id }}"
+    dc_template_name: "temp-ad.vclass.local"
+    snapshot_name: "linked"
 
 
   tasks: 
@@ -185,3 +187,137 @@
       timeout: 180
     delegate_to: localhost
     register: shell_command_with_wait_timeout        
+
+
+  - name: 06. Linked Clone for Domain Controller
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ student_id + '-DC' }}"
+      state: "poweredon"
+      datacenter: '{{ datacenter_name }}'
+      folder: "{{ folder_name }}"
+      esxi_hostname: '{{ esxi_hostname }}'
+      datastore: "{{ datastore_name }}"
+      template: "{{ dc_template_name }}"
+      linked_clone: True
+      snapshot_src: "{{ snapshot_name }}"
+      networks:
+      - name: "{{ student_id + '-SA-Mgmt' }}"
+        connected: True
+        start_connected: True
+    delegate_to: localhost
+
+  - name: Perform vMotion of virtual machine
+    community.vmware.vmware_vmotion:
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      validate_certs: no
+      vm_name: "{{ student_id + '-DC' }}"
+      destination_host: "{{ esxi_hostname }}"
+    delegate_to: localhost
+
+
+  - name: shutdown VM to change network connection
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ student_id + '-DC' }}"
+      state: "shutdownguest"
+      state_change_timeout: 60
+    delegate_to: localhost
+
+  - name: Poweron DC VM
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ student_id + '-DC' }}"
+      state: "poweredon"
+      state_change_timeout: 60
+    delegate_to: localhost
+
+
+  - name: waiting Router Booting
+    wait_for:
+      timeout: 60
+    delegate_to: localhost    
+
+
+  - name: Make folder VM inside    
+    community.vmware.vmware_guest_file_operation:
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      validate_certs: 'false'
+      vm_id: "{{ student_id + '-DC' }}"
+      vm_id_type: vm_name
+      vm_username: 'Administrator'
+      vm_password: 'VMware1!'
+      directory:
+        path: 'C:\Material'
+        operation: create
+        recurse: false
+    delegate_to: localhost
+
+# DC VM 내부에 만들어진 /Material 폴더에 PowerShell Script 파일 복사하기
+  - name: Copy powershell script to VM
+    community.vmware.vmware_guest_file_operation:
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      validate_certs: 'false'
+      vm_id: "{{ student_id + '-DC' }}"
+      vm_id_type: vm_name
+      vm_username: 'Administrator'
+      vm_password: 'VMware1!'
+      copy:
+        src: '/mnt/c/Material/Add_dns_records.ps1'
+        dest: 'C:\Material\Add_dns_records.ps1'
+        overwrite: true
+    delegate_to: localhost
+
+# 복사된 PowerShell 스크립트 파일 실행시키기
+  - name: Run dns powershell script
+    community.vmware.vmware_vm_shell:
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      validate_certs: 'false'
+      vm_id: "{{ student_id + '-DC' }}"
+      vm_id_type: vm_name
+      vm_username: 'Administrator'
+      vm_password: 'VMware1!'
+      vm_shell: 'c:\windows\system32\windowspowershell\v1.0\powershell.exe'
+      vm_shell_args: 'C:\Material\Add_dns_records.ps1'
+      vm_shell_cwd: 'c:\Users\Administrator'
+      wait_for_process: True
+      timeout: 60
+
+    delegate_to: localhost
+
+# VM_Shell 으로는 파일 복사 / 디렉토리 생성만 가능함. Powershell을 이용하여 실행된 Script 파일을 삭제하기
+  - name: Delete copied powershell script
+    community.vmware.vmware_vm_shell:
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      validate_certs: 'false'
+      vm_id: "{{ student_id + '-DC' }}"
+      vm_id_type: vm_name
+      vm_username: 'Administrator'
+      vm_password: 'VMware1!'
+      vm_shell: 'c:\windows\system32\windowspowershell\v1.0\powershell.exe'
+      vm_shell_args: 'Remove-Item C:\Material\*.ps1'
+      vm_shell_cwd: 'c:\Users\Administrator'
+      wait_for_process: True
+    delegate_to: localhost
+
+
+    
