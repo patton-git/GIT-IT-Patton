@@ -1,0 +1,296 @@
+---
+- hosts: localhost
+  gather_facts: no
+
+#  vars_files: ./vars.yaml
+  vars:
+    ansible_python_interpreter: /bin/python3
+    vcenter_hostname: "172.0.10.10"
+    vcenter_username: "s00@edu.git"
+    vcenter_password: "VMware1!"
+    datacenter_name: "Datacenter"
+    student_id: "S00"
+    parent_folder: "1.Internal-Training/Students"
+    esxi_hostname: "172.0.10.13"
+    esxi_username: "root"
+    esxi_password: "VMware1!"
+    public_net:  "DPG-172.0.10.x"
+    private_net: "{{ student_id + '-Trunk' }}"
+    datastore_name: "vsanDatastore"
+    folder_name: "{{ datacenter_name + '/vm/' + parent_folder + '/' + student_id }}"
+    dc_template_name: "temp-ad.vclass.local"
+    esxi_template_name: "Temp-ESXi"
+    snapshot_name: "linked"
+    SA_ESXi_VMs: [ student_id + 'SA-ESXi-01', student_id + 'SA-ESXi-02', student_id + 'SA-ESXi-03', student_id + 'SA-ESXi-04' ]
+    SB_ESXi_VMs: [ student_id + 'SB-ESXi-01', student_id + 'SB-ESXi-02', student_id + 'SB-ESXi-03', student_id + 'SB-ESXi-04' ]
+    Mgmt_NICs: [ "Network adapter 1", "Network adapter 2" ]
+    Trunk_NICs: [ "Network adapter 3", "Network adapter 4" ]
+
+  tasks: 
+  - name: Clone multiple esxi vms from Template
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ item }}"
+      state: "poweredoff"
+      datacenter: '{{ datacenter_name }}'
+      folder: "{{ folder_name }}"
+      esxi_hostname: '{{ esxi_hostname }}'
+      datastore: "{{ datastore_name }}"
+      template: '{{ esxi_template_name }}'
+    loop: "{{ SA_ESXi_VMs, SB_ESXi_VMs }}"
+#      - "{{student_ID+'-SA-ESXi-01'}}"
+#      - "{{student_ID+'-SA-ESXi-02'}}"
+#      - "{{student_ID+'-SA-ESXi-03'}}"
+#      - "{{student_ID+'-SA-ESXi-04'}}"
+#      - "{{student_ID+'-SB-ESXi-01'}}"
+#      - "{{student_ID+'-SB-ESXi-02'}}"
+#      - "{{student_ID+'-SB-ESXi-03'}}"
+#      - "{{student_ID+'-SB-ESXi-04'}}"
+    delegate_to: localhost
+
+
+  - name: Change vCPU, vRAM
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      datacenter: "{{ datacenter_name }}"
+      name: "{{ item }}"
+      hardware:
+        memory_mb: 16384
+        num_cpus: 4
+    loop: "{{ SA_ESXi_VMs, SB_ESXi_VMs }}"
+#      - "{{student_ID+'-SA-ESXi-01'}}"
+#      - "{{student_ID+'-SA-ESXi-02'}}"
+#      - "{{student_ID+'-SA-ESXi-03'}}"
+#      - "{{student_ID+'-SA-ESXi-04'}}"
+#      - "{{student_ID+'-SB-ESXi-01'}}"
+#      - "{{student_ID+'-SB-ESXi-02'}}"
+#      - "{{student_ID+'-SB-ESXi-03'}}"
+#      - "{{student_ID+'-SB-ESXi-04'}}"
+    delegate_to: localhost
+
+
+  - name: Adding vSAN NVMe Disks
+    community.vmware.vmware_guest_disk:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      datacenter: "{{ datacenter_name }}"
+      name: "{{ item }}"
+      disk:
+        - size_gb: 40
+          state: present
+          controller_type: nvme
+          controller_number: 0
+          unit_number: 0
+        - size_gb: 40
+          state: present
+          controller_type: nvme
+          controller_number: 0
+          unit_number: 1
+        - size_gb: 200
+          state: present
+          controller_type: nvme
+          controller_number: 0
+          unit_number: 2
+        - size_gb: 200
+          state: present
+          controller_type: nvme
+          controller_number: 0
+          unit_number: 3
+    loop: "{{ SA_ESXi_VMs, SB_ESXi_VMs }}"
+#      - "{{student_ID+'-SA-ESXi-01'}}"
+#      - "{{student_ID+'-SA-ESXi-02'}}"
+#      - "{{student_ID+'-SA-ESXi-03'}}"
+#      - "{{student_ID+'-SA-ESXi-04'}}"
+#      - "{{student_ID+'-SB-ESXi-01'}}"
+#      - "{{student_ID+'-SB-ESXi-02'}}"
+#      - "{{student_ID+'-SB-ESXi-03'}}"
+#      - "{{student_ID+'-SB-ESXi-04'}}"
+    delegate_to: localhost
+
+
+# https://stackoverflow.com/questions/59626587/how-to-change-vmware-network-adapter-with-ansible
+  - name: Change SA_ESXi_VMs Mgmt NICs
+    community.vmware.vmware_guest_network:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ item[0] }}"
+      label: "{{ item[1] }}"
+      network_name: "{{ student_ID + '-SA-Mgmt' }}"
+      state: present
+      force: yes
+    loop: "{{ SA_ESXi_VMs | product(Mgmt_NICs) | list }}"
+    delegate_to: localhost
+
+  - name: Change SA_ESXi_VMs Trunk NICs
+    community.vmware.vmware_guest_network:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ item[0] }}"
+      label: "{{ item[1] }}"
+      network_name: "{{ student_ID + '-Trunk' }}"
+      state: present
+      force: yes
+    loop: "{{ SA_ESXi_VMs | product(Trunk_NICs) | list }}"
+    delegate_to: localhost
+
+  - name: Change SB_ESXi_VMs Mgmt NICs
+    community.vmware.vmware_guest_network:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ item[0] }}"
+      label: "{{ item[1] }}"
+      network_name: "{{ student_ID + '-SB-Mgmt' }}"
+      state: present
+      force: yes
+    loop: "{{ SB_ESXi_VMs | product(Mgmt_NICs) | list }}"
+    delegate_to: localhost
+
+  - name: Change SB_ESXi_VMs Trunk NICs
+    community.vmware.vmware_guest_network:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ item[0] }}"
+      label: "{{ item[1] }}"
+      network_name: "{{ student_ID + '-Trunk' }}"
+      state: present
+      force: yes
+    loop: "{{ SB_ESXi_VMs | product(Trunk_NICs) | list }}"
+    delegate_to: localhost
+
+
+# https://docs.ansible.com/ansible/latest/collections/community/vmware/vmware_guest_module.html
+  - name: Power on ESXi VMs
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ item }}"
+      state: "poweredon"
+    loop: "{{ SA_ESXi_VMs, SB_ESXi_VMs }}"
+#      - "{{student_ID+'-SA-ESXi-01'}}"
+#      - "{{student_ID+'-SA-ESXi-02'}}"
+#      - "{{student_ID+'-SA-ESXi-03'}}"
+#      - "{{student_ID+'-SA-ESXi-04'}}"
+#      - "{{student_ID+'-SB-ESXi-01'}}"
+#      - "{{student_ID+'-SB-ESXi-02'}}"
+#      - "{{student_ID+'-SB-ESXi-03'}}"
+#      - "{{student_ID+'-SB-ESXi-04'}}"
+    delegate_to: localhost
+ 
+  - name: Waiting boot-up
+    wait_for:
+      timeout: 120
+    delegate_to: localhost
+
+  - name: Configure Site-A ESXi VMs
+    community.vmware.vmware_vm_shell:
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      validate_certs: 'false'
+      datacenter: '{{ datacenter_name }}'
+      folder: "{{ folder_name }}"
+      vm_id: "{{ item.vm_name }}"
+      vm_id_type: vm_name
+      vm_username: 'root'
+      vm_password: 'VMware1!'
+      vm_shell: /bin/sh
+      vm_shell_cwd: "/tmp"
+      vm_shell_args: |
+        echo "Don't remove this line. Write your ESXi configuration commands below."
+        esxcli system settings advanced set -o /Net/FollowHardwareMac -i 1
+        sed -i 's#/system/uuid.*##' /etc/vmware/esx.conf
+        esxcli network vswitch standard uplink add -u vmnic1 -v vSwitch0
+        esxcli network ip interface ipv4 set -i vmk0 -t static -I {{ item.ipaddr }} -N 255.255.255.0 -g 10.10.10.1
+        esxcli network ip route ipv4 add -n 0.0.0.0 -g 10.10.10.1
+        esxcli network ip dns server add -s 10.10.10.2
+        esxcli system hostname set --host {{ item.host_name }}
+        esxcli system hostname set --domain vclass.local
+        esxcli system ntp set -e yes -s 10.10.10.1
+        vim-cmd hostsvc/enable_ssh
+        vim-cmd hostsvc/enable_esx_shell
+        vim-cmd hostsvc/advopt/update UserVars.SuppressShellWarning long 1
+        /sbin/generate-certificates
+        /sbin/auto-backup.sh
+      wait_for_process: True
+    loop:
+    - { vm_name: "{{student_ID+'-SA-ESXi-01'}}", host_name: sa-esxi-01, ipaddr: 10.10.10.11 }
+    - { vm_name: "{{student_ID+'-SA-ESXi-02'}}", host_name: sa-esxi-02, ipaddr: 10.10.10.12 }
+    - { vm_name: "{{student_ID+'-SA-ESXi-03'}}", host_name: sa-esxi-03, ipaddr: 10.10.10.13 }
+    - { vm_name: "{{student_ID+'-SA-ESXi-04'}}", host_name: sa-esxi-04, ipaddr: 10.10.10.14 }
+
+
+  - name: Configure Site-B ESXi VMs
+    community.vmware.vmware_vm_shell:
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      validate_certs: 'false'
+      datacenter: '{{ datacenter_name }}'
+      folder: "{{ full_folder_prefix }}"
+      vm_id: "{{ item.vm_name }}"
+      vm_id_type: vm_name
+      vm_username: 'root'
+      vm_password: 'VMware1!'
+      vm_shell: /bin/sh
+      vm_shell_cwd: "/tmp"
+      vm_shell_args: |
+        echo "Don't remove this line. Write your ESXi configuration commands below."
+        esxcli system settings advanced set -o /Net/FollowHardwareMac -i 1
+        sed -i 's#/system/uuid.*##' /etc/vmware/esx.conf
+        esxcli network vswitch standard uplink add -u vmnic1 -v vSwitch0
+        esxcli network ip interface ipv4 set -i vmk0 -t static -I {{ item.ipaddr }} -N 255.255.255.0 -g 10.10.20.1
+        esxcli network ip route ipv4 add -n 0.0.0.0 -g 10.10.20.1
+        esxcli network ip dns server add -s 10.10.10.2
+        esxcli system hostname set --host {{ item.host_name }}
+        esxcli system hostname set --domain vclass.local
+        esxcli system ntp set -e yes -s 10.10.20.1
+        vim-cmd hostsvc/enable_ssh
+        vim-cmd hostsvc/enable_esx_shell
+        vim-cmd hostsvc/advopt/update UserVars.SuppressShellWarning long 1
+        /sbin/generate-certificates
+        /sbin/auto-backup.sh
+      wait_for_process: True
+    loop:
+    - { vm_name: "{{student_ID+'-SB-ESXi-01'}}", host_name: sb-esxi-01, ipaddr: 10.10.110.11 }
+    - { vm_name: "{{student_ID+'-SB-ESXi-02'}}", host_name: sb-esxi-02, ipaddr: 10.10.110.12 }
+    - { vm_name: "{{student_ID+'-SB-ESXi-03'}}", host_name: sb-esxi-03, ipaddr: 10.10.110.13 }
+    - { vm_name: "{{student_ID+'-SB-ESXi-04'}}", host_name: sb-esxi-04, ipaddr: 10.10.110.14 }
+
+
+  - name: Reboot ESXi VM
+    community.vmware.vmware_guest_powerstate:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: 'false'        
+      folder: "{{ full_folder_prefix + student_ID }}"
+      name: "{{ item }}"
+      state: reboot-guest
+    loop: "{{ SA_ESXi_VMs, SB_ESXi_VMs }}"
+#      - "{{student_ID+'-SA-ESXi-01'}}"
+#      - "{{student_ID+'-SA-ESXi-02'}}"
+#      - "{{student_ID+'-SA-ESXi-03'}}"
+#      - "{{student_ID+'-SA-ESXi-04'}}"
+#      - "{{student_ID+'-SB-ESXi-01'}}"
+#      - "{{student_ID+'-SB-ESXi-02'}}"
+#      - "{{student_ID+'-SB-ESXi-03'}}"
+#      - "{{student_ID+'-SB-ESXi-04'}}"
+    delegate_to: localhost
