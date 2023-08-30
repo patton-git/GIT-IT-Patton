@@ -9,7 +9,7 @@ Add-DnsServerPrimaryZone -NetworkID 10.10.20.0/24 -ZoneFile "20.10.10.in-addr.ar
 Add-DnsServerPrimaryZone -NetworkID 10.10.30.0/24 -ZoneFile "30.10.10.in-addr.arpa.dns"
 
 # 역방향 조회 도메인 삭제하기
-Remove-DnsServerZone "10.10.in-addr.arpa" -PassThru -Verbose -confirm:$false
+Remove-DnsServerZone "10.10.in-addr.arpa" -PassThru -Verbose -Force -confirm:$false 
 
 # DNS 포워딩 
 # Add-DnsServerForwarder -IPAddress 172.0.10.2 -PassThru
