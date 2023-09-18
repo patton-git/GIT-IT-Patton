@@ -1,0 +1,40 @@
+---
+- hosts: localhost
+  gather_facts: no
+
+  vars:
+    ansible_python_interpreter: /bin/python3
+    vcenter_hostname: "10.10.10.10"
+    vcenter_username: "administrator@vsphere.local"
+    vcenter_password: "VMware1!"
+    datacenter_name: "Datacenter"
+    photon_vm: "Test-01"
+    photon_vm_pass: "wareVM1!"
+
+  tasks: 
+  - name: Customization_Photon_VM
+    community.vmware.vmware_vm_shell:
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      validate_certs: 'false'
+      datacenter: '{{ datacenter_name }}'
+      vm_id: "{{ photon_vm }}"
+      vm_id_type: vm_name
+      vm_username: 'root'
+      vm_password: "{{ photon_vm_pass }}"
+      vm_shell: /bin/bash
+      vm_shell_cwd: "/tmp"
+      vm_shell_args: |-
+        sed -i 's/PermitRootLogin no/PermitRootLogin yes/' /etc/ssh/sshd_config
+        systemctl restart sshd
+
+        iptables -A INPUT -p icmp -j ACCEPT
+        iptables-save >/etc/systemd/scripts/ip4save
+
+        systemctl start docker
+        systemctl enable docker
+      wait_for_process: True
+      timeout: 60
+    delegate_to: localhost
+    register: shell_command_with_wait_timeout        
