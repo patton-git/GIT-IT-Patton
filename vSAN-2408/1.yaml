@@ -1,1 +1,30 @@
+---
+- hosts: localhost
+  vars:
+    ansible_python_interpreter: /bin/python3
+    SA-VCSA-01 : "sa-vcsa-01.lab.git"
+    SB-VCSA-01 : "sb-vcsa-01.lab.git"
+    SC-VCSA-01 : "sc-vcsa-01.lab.git"
+    vcenter_username: "administrator@vsphere.lab"
+    vcenter_password: "VMware1!"
+    SA-DC: "SA-Datacenter"
+    SA-Cluster: "SA-vSAN"
+    SA-DS: "SA-vSAN"
+    SA-FN: "SA-Datacenter/vm/3.Students/"
 
+  tasks:
+  - name: Create a sub folder under VM folder on given datacenter
+    community.vmware.vcenter_folder:
+      hostname: '{{ item.VCSA }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      validate_certs: no
+      datacenter: '{{ item.DC }}'
+      folder_type: vm
+      folder_name: '{{ item.ID }}'
+      parent_folder: '{{ item.FN }}'
+      state: present
+    loop:
+      - { VCSA: '{{ SA-VCSA-01 }}' , DC: '{{ SA-DC }}', FN: '{{ SA-FN }}', ID: S00  }
+    register: sub_folder_creation_result
+    delegate_to: localhost
