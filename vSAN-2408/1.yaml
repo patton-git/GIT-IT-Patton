@@ -20,6 +20,11 @@
     sc_ds: "SC-vSAN"
     sc_fn: "3.SC-Students/"
     id: "S00"
+    sa_esxi: "sa-esxi-01.lab.git"
+    sb_esxi: "sb-esxi-01.lab.git"
+    sc_esxi: "sc-esxi-01.lab.git"
+    esxi_username: "root"
+    esxi_password: "VMware1!"
 
 
   tasks:
@@ -39,4 +44,18 @@
       - { VCSA: '{{ sb_vcsa }}' , DC: '{{ sb_dc }}', FN: '{{ sb_fn }}', ID: '{{ id }}'  }
       - { VCSA: '{{ sc_vcsa }}' , DC: '{{ sc_dc }}', FN: '{{ sc_fn }}', ID: '{{ id }}'  }
     register: sub_folder_creation_result
+    delegate_to: localhost
+
+
+  - name: 02. Create Project Standard vSwitch
+    community.vmware.vmware_vswitch:
+      hostname: '{{ item.host }}'
+      username: '{{ esxi_username }}'
+      password: '{{ esxi_password }}'
+      validate_certs: false
+      switch: '{{ item.vswitch }}'
+    loop:
+      - { host: '{{ sa_esxi }}' , vswitch: '{{ id }}-SA'  }
+      - { host: '{{ sb_esxi }}' , vswitch: '{{ id }}-SB'  }
+      - { host: '{{ sc_esxi }}' , vswitch: '{{ id }}-SC'  }
     delegate_to: localhost
