@@ -27,6 +27,10 @@
     esxi_password: "VMware1!"
     sa_temp_router: "Temp-Router"
     sa_router_uppg: "VM-10.50.141.x"
+    sa_temp_ad: "Temp-ad.vclass.local"
+    snapshot_name: "Installed"
+    sa_temp_vcsa: "Temp-sa-vcsa-01"
+    sa_temp_esxi: "Temp-sa-esxi-01"
 
 
   tasks:
@@ -104,7 +108,7 @@
       password: "{{ vcenter_password }}"
       validate_certs: no
       name: "{{ item.router }}"
-      state: "poweredoff"
+      state: "poweredon"
       datacenter: '{{ sa_dc }}'
       folder: '{{ sa_fn }}{{ id }}'
       esxi_hostname: '{{ sa_esxi }}'
@@ -113,12 +117,300 @@
       networks:
         - name: "{{ sa_router_uppg }}"
           label: "Network adapter 1"
-          connected: True
-          start_connected: True
         - name: "{{ item.downpg }}"
           label: "Network adapter 2"
-          connected: True
-          start_connected: True
     loop:
-      - { router: '{{ id }}-SA-Router-1', downpg: '{{ id }}-SA-Trunk' }
+      - { router: '{{ id }}-SA-Router', downpg: '{{ id }}-SA-Trunk' }
+    delegate_to: localhost
+
+
+  - name: 06. waiting router boot-up
+    wait_for:
+      timeout: 60
+    delegate_to: localhost
+
+
+  - name: 07. SiteA Router - Network Connect
+    community.vmware.vmware_guest_network:
+      hostname: "{{ sa_vcsa }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no      
+      folder: '{{ sa_fn }}{{ id }}'
+      name: '{{ item.router }}'
+      label: '{{ item.label }}'
+      network_name: '{{ item.pg }}'
+    loop:
+      - { router: '{{ id }}-SA-Router', pg: "VM-10.50.141.x", label: "Network adapter 1"  }
+      - { router: '{{ id }}-SA-Router', pg: '{{ id }}-SA-Trunk', label: "Network adapter 2"  }
+    delegate_to: localhost
+
+
+  - name: 08. Configure SiteA Router
+    community.vmware.vmware_vm_shell:
+      hostname: "{{ sa_vcsa }}"
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      validate_certs: 'false'
+      datacenter: '{{ sa_dc }}'
+      folder: '{{ sa_fn }}{{ id }}'
+      vm_id: "{{ item.router }}"
+      vm_id_type: vm_name
+      vm_username: 'vyos'
+      vm_password: 'vyos'
+      vm_shell: /bin/vbash
+      vm_shell_cwd: "/tmp"
+      vm_shell_args: |-
+        -c "source /opt/vyatta/etc/functions/script-template
+        configure
+          set service ssh port 22
+          set system ipv6 disable
+          
+          set interfaces ethernet eth0 address '{{ item.ip }}/24'
+          set interfaces ethernet eth0 ipv6 address no-default-link-local
+          set protocols static route 0.0.0.0/0 next-hop '{{ item.gw}}'
+
+          set interfaces ethernet eth1 vif 10 description 'VLAN 10 - SiteA Management'
+          set interfaces ethernet eth1 vif 10 address 10.10.10.1/24
+          set interfaces ethernet eth1 vif 10 ipv6 address no-default-link-local
+          set interfaces ethernet eth1 vif 11 description 'VLAN 11 - SiteA vSAN'
+          set interfaces ethernet eth1 vif 11 address 10.10.11.1/24
+          set interfaces ethernet eth1 vif 11 ipv6 address no-default-link-local
+          set interfaces ethernet eth1 vif 12 description 'VLAN 12 - SiteA vMotion'
+          set interfaces ethernet eth1 vif 12 address 10.10.12.1/24
+          set interfaces ethernet eth1 vif 12 ipv6 address no-default-link-local
+          set interfaces ethernet eth1 vif 13 description 'VLAN 13 - SiteA Production'
+          set interfaces ethernet eth1 vif 13 address 10.10.13.1/24
+          set interfaces ethernet eth1 vif 13 ipv6 address no-default-link-local
+
+          set system name-server '{{ item.dns }}'
+          set service ntp server kr.pool.ntp.org
+                      
+          set nat source rule 10 outbound-interface eth0
+          set nat source rule 10 source address 10.10.10.0/24
+          set nat source rule 10 translation address masquerade
+
+          set nat source rule 13 outbound-interface eth0
+          set nat source rule 13 source address 10.10.13.0/24
+          set nat source rule 13 translation address masquerade
+          
+        commit
+        save"
+      wait_for_process: True
+      timeout: 180
+    loop:
+      - { router: '{{ id }}-SA-Router', ip: "10.50.141.30", gw: "10.50.141.1", dns: "10.50.141.4" }
+    delegate_to: localhost
+    register: shell_command_with_wait_timeout        
+
+
+  - name: 09. Linked Clone - Domain Controller
+    community.vmware.vmware_guest:
+      hostname: "{{ sa_vcsa }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: '{{ id }}-AD'
+      state: "poweredoff"
+      datacenter: '{{ sa_dc }}'
+      folder: '{{ sa_fn }}{{ id }}'
+      esxi_hostname: '{{ sa_esxi }}'
+      datastore: '{{ sa_ds }}'
+      template: '{{ sa_temp_ad }}'
+      linked_clone: True
+      snapshot_src: "{{ snapshot_name }}"
+    delegate_to: localhost
+
+
+  - name: 10. Change network - AD VM
+    community.vmware.vmware_guest_network:
+      hostname: "{{ sa_vcsa }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no      
+      folder: '{{ sa_fn }}{{ id }}'
+      name: '{{ id }}-AD'
+      label: "Network adapter 1"
+      network_name: '{{ id }}-SA-Mgmt'
+    delegate_to: localhost
+
+
+  - name: 11. Poweron DC VM
+    community.vmware.vmware_guest:
+      hostname: "{{ sa_vcsa }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: '{{ id }}-AD'
+      state: "poweredon"
+      state_change_timeout: 60
+    delegate_to: localhost
+
+
+  - name: 12. Linked Clone - VCSA
+    community.vmware.vmware_guest:
+      hostname: "{{ sa_vcsa }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: '{{ id }}-VCSA'
+      state: "poweredoff"
+      datacenter: '{{ sa_dc }}'
+      folder: '{{ sa_fn }}{{ id }}'
+      esxi_hostname: '{{ sa_esxi }}'
+      datastore: '{{ sa_ds }}'
+      template: '{{ sa_temp_vcsa }}'
+      linked_clone: True
+      snapshot_src: "{{ snapshot_name }}"
+    delegate_to: localhost
+
+
+  - name: 13. Change network - VCSA VM
+    community.vmware.vmware_guest_network:
+      hostname: "{{ sa_vcsa }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no      
+      folder: '{{ sa_fn }}{{ id }}'
+      name: '{{ id }}-VCSA'
+      label: "Network adapter 1"
+      network_name: '{{ id }}-SA-Mgmt'
+    delegate_to: localhost
+
+
+  - name: 14. Poweron VCSA VM
+    community.vmware.vmware_guest:
+      hostname: "{{ sa_vcsa }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: '{{ id }}-VCSA'
+      state: "poweredon"
+      state_change_timeout: 60
+    delegate_to: localhost
+
+
+  - name: 15. Deploy sa-esxi VMs
+    community.vmware.vmware_guest:
+      hostname: '{{ sa_vcsa }}'
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: '{{ item.vm }}'
+      state: "poweredoff"
+      datacenter: '{{ sa_dc }}'
+      folder: '{{ sa_fn }}{{ id }}'
+      esxi_hostname: '{{ sa_esxi }}'
+      datastore: '{{ sa_ds }}'
+      template: '{{ sa_temp_esxi }}'
+    loop:
+      - { vm: '{{ id }}-SA-ESXi-01' }
+      - { vm: '{{ id }}-SA-ESXi-02' }
+      - { vm: '{{ id }}-SA-ESXi-03' }
+      - { vm: '{{ id }}-SA-ESXi-04' }
+    delegate_to: localhost
+
+
+  - name: 16. Change SA-ESXi VMs Nics
+    community.vmware.vmware_guest_network:
+      hostname: '{{ sa_vcsa }}'
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      datacenter: '{{ sa_dc }}'
+      folder: '{{ sa_fn }}{{ id }}'
+      name: "{{ item.vm }}"
+      label: "{{ item.label }}"
+      network_name: "{{ item.pg }}"
+      state: present
+      force: yes
+    loop:
+      - { vm: '{{ id }}-SA-ESXi-01', label: "Network adpater 1", pg: '{{ id }}-SA-Mgmt' }
+      - { vm: '{{ id }}-SA-ESXi-01', label: "Network adpater 2", pg: '{{ id }}-SA-Mgmt' }
+      - { vm: '{{ id }}-SA-ESXi-01', label: "Network adpater 3", pg: '{{ id }}-SA-Trunk' }
+      - { vm: '{{ id }}-SA-ESXi-01', label: "Network adpater 4", pg: '{{ id }}-SA-Trunk' }
+      - { vm: '{{ id }}-SA-ESXi-02', label: "Network adpater 1", pg: '{{ id }}-SA-Mgmt' }
+      - { vm: '{{ id }}-SA-ESXi-02', label: "Network adpater 2", pg: '{{ id }}-SA-Mgmt' }
+      - { vm: '{{ id }}-SA-ESXi-02', label: "Network adpater 3", pg: '{{ id }}-SA-Trunk' }
+      - { vm: '{{ id }}-SA-ESXi-02', label: "Network adpater 4", pg: '{{ id }}-SA-Trunk' }
+      - { vm: '{{ id }}-SA-ESXi-03', label: "Network adpater 1", pg: '{{ id }}-SA-Mgmt' }
+      - { vm: '{{ id }}-SA-ESXi-03', label: "Network adpater 2", pg: '{{ id }}-SA-Mgmt' }
+      - { vm: '{{ id }}-SA-ESXi-03', label: "Network adpater 3", pg: '{{ id }}-SA-Trunk' }
+      - { vm: '{{ id }}-SA-ESXi-03', label: "Network adpater 4", pg: '{{ id }}-SA-Trunk' }
+      - { vm: '{{ id }}-SA-ESXi-04', label: "Network adpater 1", pg: '{{ id }}-SA-Mgmt' }
+      - { vm: '{{ id }}-SA-ESXi-04', label: "Network adpater 2", pg: '{{ id }}-SA-Mgmt' }
+      - { vm: '{{ id }}-SA-ESXi-04', label: "Network adpater 3", pg: '{{ id }}-SA-Trunk' }
+      - { vm: '{{ id }}-SA-ESXi-04', label: "Network adpater 4", pg: '{{ id }}-SA-Trunk' }
+    delegate_to: localhost
+
+  - name: 17. Power on ESXi VMs
+    community.vmware.vmware_guest:
+      hostname: '{{ sa_vcsa }}'
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      datacenter: '{{ sa_dc }}'
+      folder: '{{ sa_fn }}{{ id }}'
+      name: "{{ item.vm }}"
+      state: "poweredon"
+    loop:
+      - { vm: '{{ id }}-SA-ESXi-01' }
+      - { vm: '{{ id }}-SA-ESXi-02' }
+      - { vm: '{{ id }}-SA-ESXi-03' }
+      - { vm: '{{ id }}-SA-ESXi-04' }
+    delegate_to: localhost
+
+  - name: 18. Waiting boot-up
+    wait_for:
+      timeout: 120
+    delegate_to: localhost
+
+
+  - name: 19. Configure Site-A ESXi VMs
+    community.vmware.vmware_vm_shell:
+      hostname: '{{ sa_vcsa }}'
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      datacenter: '{{ sa_dc }}'
+      folder: '{{ sa_fn }}{{ id }}'
+      vm_id: "{{ item.vm }}"
+      vm_id_type: vm_name
+      vm_username: 'root'
+      vm_password: 'VMware1!'
+      vm_shell: /bin/sh
+      vm_shell_cwd: "/tmp"
+      vm_shell_args: |
+        echo "Don't remove this line. Write your ESXi configuration commands below."
+        esxcli system settings advanced set -o /Net/FollowHardwareMac -i 1
+        sed -i 's#/system/uuid.*##' /etc/vmware/esx.conf
+        esxcli network ip interface ipv4 set -i vmk0 -t static -I {{ item.ip }} -N 255.255.255.0 -g 10.10.10.1
+        esxcli system hostname set --host {{ item.hostname }}
+        esxcli system hostname set --domain vclass.local
+        vim-cmd hostsvc/advopt/update UserVars.SuppressShellWarning long 1
+        /sbin/generate-certificates
+      wait_for_process: True
+    loop:
+      - { vm: '{{ id }}-SA-ESXi-01', ip: "10.10.10.11", hostname: sa-esxi-01 }
+      - { vm: '{{ id }}-SA-ESXi-02', ip: "10.10.10.12", hostname: sa-esxi-02 }
+      - { vm: '{{ id }}-SA-ESXi-03', ip: "10.10.10.13", hostname: sa-esxi-03 }
+      - { vm: '{{ id }}-SA-ESXi-04', ip: "10.10.10.14", hostname: sa-esxi-04 }
+#        /sbin/auto-backup.sh
+
+
+  - name: 20. Reboot SA-ESXi VMs
+    community.vmware.vmware_guest_powerstate:
+      hostname: '{{ sa_vcsa }}'
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      datacenter: '{{ sa_dc }}'
+      folder: '{{ sa_fn }}{{ id }}'
+      name: "{{ item.vm }}"
+      state: reboot-guest
+    loop:
+      - { vm: '{{ id }}-SA-ESXi-01' }
+      - { vm: '{{ id }}-SA-ESXi-02' }
+      - { vm: '{{ id }}-SA-ESXi-03' }
+      - { vm: '{{ id }}-SA-ESXi-04' }
     delegate_to: localhost
