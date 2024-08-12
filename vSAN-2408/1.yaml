@@ -325,23 +325,24 @@
       state: present
       force: yes
     loop:
-      - { vm: '{{ id }}-SA-ESXi-01', label: "Network adpater 1", pg: '{{ id }}-SA-Mgmt' }
-      - { vm: '{{ id }}-SA-ESXi-01', label: "Network adpater 2", pg: '{{ id }}-SA-Mgmt' }
-      - { vm: '{{ id }}-SA-ESXi-01', label: "Network adpater 3", pg: '{{ id }}-SA-Trunk' }
-      - { vm: '{{ id }}-SA-ESXi-01', label: "Network adpater 4", pg: '{{ id }}-SA-Trunk' }
-      - { vm: '{{ id }}-SA-ESXi-02', label: "Network adpater 1", pg: '{{ id }}-SA-Mgmt' }
-      - { vm: '{{ id }}-SA-ESXi-02', label: "Network adpater 2", pg: '{{ id }}-SA-Mgmt' }
-      - { vm: '{{ id }}-SA-ESXi-02', label: "Network adpater 3", pg: '{{ id }}-SA-Trunk' }
-      - { vm: '{{ id }}-SA-ESXi-02', label: "Network adpater 4", pg: '{{ id }}-SA-Trunk' }
-      - { vm: '{{ id }}-SA-ESXi-03', label: "Network adpater 1", pg: '{{ id }}-SA-Mgmt' }
-      - { vm: '{{ id }}-SA-ESXi-03', label: "Network adpater 2", pg: '{{ id }}-SA-Mgmt' }
-      - { vm: '{{ id }}-SA-ESXi-03', label: "Network adpater 3", pg: '{{ id }}-SA-Trunk' }
-      - { vm: '{{ id }}-SA-ESXi-03', label: "Network adpater 4", pg: '{{ id }}-SA-Trunk' }
-      - { vm: '{{ id }}-SA-ESXi-04', label: "Network adpater 1", pg: '{{ id }}-SA-Mgmt' }
-      - { vm: '{{ id }}-SA-ESXi-04', label: "Network adpater 2", pg: '{{ id }}-SA-Mgmt' }
-      - { vm: '{{ id }}-SA-ESXi-04', label: "Network adpater 3", pg: '{{ id }}-SA-Trunk' }
-      - { vm: '{{ id }}-SA-ESXi-04', label: "Network adpater 4", pg: '{{ id }}-SA-Trunk' }
+      - { vm: '{{ id }}-SA-ESXi-01', label: "Network adapter 1", pg: '{{ id }}-SA-Mgmt' }
+      - { vm: '{{ id }}-SA-ESXi-01', label: "Network adapter 2", pg: '{{ id }}-SA-Mgmt' }
+      - { vm: '{{ id }}-SA-ESXi-01', label: "Network adapter 3", pg: '{{ id }}-SA-Trunk' }
+      - { vm: '{{ id }}-SA-ESXi-01', label: "Network adapter 4", pg: '{{ id }}-SA-Trunk' }
+      - { vm: '{{ id }}-SA-ESXi-02', label: "Network adapter 1", pg: '{{ id }}-SA-Mgmt' }
+      - { vm: '{{ id }}-SA-ESXi-02', label: "Network adapter 2", pg: '{{ id }}-SA-Mgmt' }
+      - { vm: '{{ id }}-SA-ESXi-02', label: "Network adapter 3", pg: '{{ id }}-SA-Trunk' }
+      - { vm: '{{ id }}-SA-ESXi-02', label: "Network adapter 4", pg: '{{ id }}-SA-Trunk' }
+      - { vm: '{{ id }}-SA-ESXi-03', label: "Network adapter 1", pg: '{{ id }}-SA-Mgmt' }
+      - { vm: '{{ id }}-SA-ESXi-03', label: "Network adapter 2", pg: '{{ id }}-SA-Mgmt' }
+      - { vm: '{{ id }}-SA-ESXi-03', label: "Network adapter 3", pg: '{{ id }}-SA-Trunk' }
+      - { vm: '{{ id }}-SA-ESXi-03', label: "Network adapter 4", pg: '{{ id }}-SA-Trunk' }
+      - { vm: '{{ id }}-SA-ESXi-04', label: "Network adapter 1", pg: '{{ id }}-SA-Mgmt' }
+      - { vm: '{{ id }}-SA-ESXi-04', label: "Network adapter 2", pg: '{{ id }}-SA-Mgmt' }
+      - { vm: '{{ id }}-SA-ESXi-04', label: "Network adapter 3", pg: '{{ id }}-SA-Trunk' }
+      - { vm: '{{ id }}-SA-ESXi-04', label: "Network adapter 4", pg: '{{ id }}-SA-Trunk' }
     delegate_to: localhost
+
 
   - name: 17. Power on ESXi VMs
     community.vmware.vmware_guest:
