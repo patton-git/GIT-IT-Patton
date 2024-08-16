@@ -1,5 +1,7 @@
 ---
-- hosts: localhost
+- name: Deploy Lab
+  hosts: localhost
+  gather_facts: no
   vars:
     ansible_python_interpreter: /bin/python3
 
@@ -39,7 +41,6 @@
     sa_router_ip: "10.50.141.30"   ## check unused IP and assign it (Network IP Scan)
     sb_router_ip: "10.50.141.40"   ## check unused IP and assign it (Network IP Scan)
     sc_router_ip: "10.50.141.50"   ## check unused IP and assign it (Network IP Scan)
-
 
     sa_temp_ad: "Temp-ad.vclass.local"
     snapshot_name: "Installed"
