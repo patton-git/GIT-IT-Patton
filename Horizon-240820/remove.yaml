@@ -1,0 +1,80 @@
+---
+- name: destroy lab
+  hosts: localhost
+  gather_facts: no
+  vars:
+    sc_vcsa : "sc-vcsa-01.lab.git"
+    vcenter_username: "administrator@vsphere.lab"
+    vcenter_password: "VMware1!"
+
+    sc_dc: "SC-Datacenter"
+    sc_cluster: "SC-vSAN"
+    sc_ds: "sc-vSAN"
+    sc_fn: "3.SC-Students/"
+
+    sc_esxi: "sc-esxi-01.lab.git"
+    esxi_username: "root"
+    esxi_password: "VMware1!"
+
+    id: "H00"                      ## check existing folder (switch) name
+
+  tasks:
+    - name: 01. List-up VMs
+      community.vmware.vmware_vm_info:
+        hostname: '{{ sc_vcsa }}'
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: no
+        folder: '{{ sc_dc }}/vm/{{ sc_fn }}{{ id }}'
+      register: listup_vms
+
+    - name: 02. Stop list-up VMs
+      community.vmware.vmware_guest_powerstate:
+        hostname: "{{ sc_vcsa }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: no
+        datacenter: "{{ sc_dc }}"
+        name: "{{ item.guest_name }}"
+        state: powered-off
+      loop: "{{ listup_vms.virtual_machines }}"
+
+    - name: 03. Delete list-up VMs
+      community.vmware.vmware_guest:
+        hostname: "{{ sc_vcsa }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: no
+        datacenter: "{{ sc_dc }}"
+        folder: '{{ sc_dc }}/vm/{{ sc_fn }}{{ id }}'
+        name: "{{ item.guest_name }}"
+        state: absent
+      loop: "{{ listup_vms.virtual_machines }}"
+
+    - name: 04. Remove LAB Standard vSwitch
+      community.vmware.vmware_vswitch:
+        hostname: '{{ item.host }}'
+        username: '{{ esxi_username }}'
+        password: '{{ esxi_password }}'
+        validate_certs: false
+        switch: '{{ item.vswitch }}'
+        state: absent
+      loop:
+        - { host: '{{ sc_esxi }}' , vswitch: '{{ id }}-SC'  }
+      delegate_to: localhost
+
+
+    - name: 05. Remove LAB VM Folder
+      community.vmware.vcenter_folder:
+        hostname: '{{ item.VCSA }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: no
+        datacenter: '{{ item.DC }}'
+        folder_type: vm
+        folder_name: '{{ item.ID }}'
+        parent_folder: '{{ item.FN }}'
+        state: absent
+      loop:
+      - { VCSA: '{{ sc_vcsa }}' , DC: '{{ sc_dc }}', FN: '{{ sc_fn }}', ID: '{{ id }}'  }
+      delegate_to: localhost
