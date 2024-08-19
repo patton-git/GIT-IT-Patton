@@ -151,9 +151,9 @@
           subnet_mask: 255.255.255.0
         state: present
       loop:
-      - { esxi_host: sa-esxi-01.vclass.local, iscsi: 10.10.12.11 }
-      - { esxi_host: sa-esxi-02.vclass.local, iscsi: 10.10.12.12 }
-      - { esxi_host: sa-esxi-03.vclass.local, iscsi: 10.10.12.13 }
+      - { esxi_host: sa-esxi-01.vclass.local, iscsi: 10.10.11.11 }
+      - { esxi_host: sa-esxi-02.vclass.local, iscsi: 10.10.11.12 }
+      - { esxi_host: sa-esxi-03.vclass.local, iscsi: 10.10.11.13 }
       delegate_to: localhost
 
 
@@ -212,7 +212,7 @@
       delegate_to: localhost
 
 
-    - name: 14. Set Port Binding and Target
+    - name: 14. Set iSCSI Target
       community.vmware.vmware_host_iscsi:
         hostname: "{{ vcenter_hostname }}"
         username: "{{ vcenter_username }}"
