@@ -1,9 +1,9 @@
 ---
 - hosts: all
-  become: true
-  vars:
-    vip: 172.17.1.10
-    ansible_ssh_pass: VMware1!
+#  become: true
+#  vars:
+#    vip: 172.16.0.10
+#    ansible_ssh_pass: VMware1!
 
   tasks:
     - name: Install necessary packages
