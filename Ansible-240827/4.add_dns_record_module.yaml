@@ -1,0 +1,34 @@
+## https://docs.ansible.com/ansible/latest/collections/community/windows/win_dns_record_module.html#ansible-collections-community-windows-win-dns-record-module
+
+---
+- name: Manage Multiple Forward and Reverse DNS Records
+  hosts: windows
+  vars:
+    DNS_Records:
+      - { name: haproxy1, ip: 172.16.0.8 }
+      - { name: haproxy2, ip: 172.16.0.9 }
+      - { name: k8s-api, ip: 172.16.0.10 }
+      - { name: k8s-controller1, ip: 172.16.0.11}
+      - { name: k8s-controller2, ip: 172.16.0.12}
+      - { name: k8s-controller3, ip: 172.16.0.13}
+
+  tasks:
+    - name: Add Forward DNS records
+      community.windows.win_dns_record:
+        state: present
+        name: "{{ item.name }}"
+        type: "A"
+        value: "{{ item.ip }}"
+        zone: "vclass.local"
+      loop: "{{ DNS_Records }}"
+      ignore_errors: true
+
+    - name: Add Reverse DNS records
+      community.windows.win_dns_record:
+        state: present
+        name: "{{ item.ip.split('.')[-1] }}"
+        type: "PTR"
+        value: "{{ item.name}}.vclass.local"
+        zone: "0.16.172.in-addr.arpa"
+      loop: "{{ DNS_Records }}"
+      ignore_errors: true
