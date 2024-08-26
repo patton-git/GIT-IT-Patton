@@ -1,6 +1,6 @@
 ---
 - name: Add DNS records
-  hosts: windows
+  hosts: ad-dns
   vars:
     DNS_Records :
       - { name: haproxy1, ip: 172.16.0.8}
