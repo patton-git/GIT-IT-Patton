@@ -24,7 +24,7 @@
     uplink_portgroup: "VM-10.50.142.x"               ## 라우팅/NAT를 진행할 포트 그룹을 지정하세요. "VM-10.50.141.x" "VM-10.50.142.x" "VM-10.50.143.x"
     downlink_portgroup: '{{student_id}}-Ansible'     ## 생성된 LAB 스위치/포트그룹중 내부 연결을 위한 포트그룹을 선택해 주세요. 예: S00-SA-Mgmt, A00-Ansible
 
-    template_jumpbox: "Temp-AD-NAT-WSL"
+    template_jumpbox: "Temp-Ansible"
     snapshot_name: "Installed"
 
 
@@ -81,7 +81,7 @@
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       validate_certs: no
-      name: '{{ student_id }}-Jumpbox'
+      name: '{{ student_id }}-Ansible'
       state: "poweredon"
       datacenter: '{{ datacenter_name }}'
       folder: '{{ parent_folder }}{{ student_id }}'
