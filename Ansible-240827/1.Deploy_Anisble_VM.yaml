@@ -75,7 +75,7 @@
       - { portgroup: '{{ student_id }}-Ansible', vlan: 0 }
     delegate_to: localhost
 
-  - name: 05. Deploy Jumpbox(AD-NAT-WSL) vm
+  - name: 05. Deploy Ansible(AD-NAT-WSL) vm
     community.vmware.vmware_guest:
       hostname: '{{ vcenter_hostname }}'
       username: "{{ vcenter_username }}"
