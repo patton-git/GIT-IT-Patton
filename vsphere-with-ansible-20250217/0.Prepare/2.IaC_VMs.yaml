@@ -1,0 +1,39 @@
+---
+- hosts: localhost
+
+  vars:
+    ansible_python_interpreter: /bin/python3
+    vcenter_hostname: "sa-vcsa-01.lab.git"
+    vcenter_username: "administrator@vsphere.lab"
+    vcenter_password: "VMware1!"
+    datacenter_name: "SA-Datacenter"
+    students:
+      - S00
+      - S01
+      - S02
+      - S03
+      - S04
+      - S05
+      - S06
+
+  tasks:
+
+  - name: Deploy IaC VM from Template
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ item + '-IaC' }}"
+      state: "poweredon"
+      datacenter: '{{ datacenter_name }}'
+      folder: "{{ '3.SA-Students/' + item }}"
+      esxi_hostname: "sa-esxi-01.lab.git"
+      datastore: "sa-vSAN"
+      template: "Temp-Ansible"
+      linked_clone: true
+      snapshot_src: "Installed"
+    loop: '{{ students }}'
+    delegate_to: localhost
+ 
+
