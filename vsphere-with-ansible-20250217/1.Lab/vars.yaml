@@ -1,0 +1,20 @@
+ansible_python_interpreter: /bin/python3
+
+student_ID: "S00"
+
+vcenter_hostname: "sa-vcsa-01.lab.git"
+vcenter_username: "{{ student_ID }}@vclass.kh"
+vcenter_password: "VMware1!"
+
+datacenter_name: "SA-Datacenter"
+
+folder_prefix: "SA-Datacenter/vm/3.SA-Students/"
+
+esxi_hostname: "sa-esxi-01.lab.git"
+esxi_username: "root"
+esxi_password: "VMware1!"
+
+public_net: "VM-10.50.141.x"
+private_net: "{{ student_ID }}-Trunk"
+
+datastore_name: "sa-vSAN"
