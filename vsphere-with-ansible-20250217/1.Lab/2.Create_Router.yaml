@@ -1,0 +1,40 @@
+---
+- hosts: localhost
+  vars_files: ./vars.yaml
+
+  tasks: 
+    - name: Create Router VM
+      community.vmware.vmware_guest:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: 'false'
+        datacenter: '{{datacenter_name}}'
+        folder: '{{ folder_prefix + student_ID }}'
+        name: '{{ item.vmname }}'
+        state: poweredon
+        guest_id: '{{ item.guest_id }}'
+        esxi_hostname: "{{ esxi_hostname }}"
+        hardware:
+          num_cpus: '{{ item.cpus }}'
+          memory_mb: '{{ item.memory }}'
+          scsi: paravirtual
+        disk:
+        - size_gb: '{{ item.disk_gb }}'
+          type: thin
+          datastore: '{{ datastore_name }}'
+        networks:
+        - name: '{{ public_net }}'
+          device_type: vmxnet3
+        - name: '{{ private_net }}'
+          device_type: vmxnet3
+        cdrom:
+        - controller_number: 0
+          unit_number: 0
+          state: present
+          type: iso
+          iso_path: "[sa-esxi-01]\ISO\vyos-1.5-rolling-202502130006-generic-amd64.iso"
+      loop:
+      - { vmname: "{{ student_ID }}-Router", guest_id: debian10_64Guest, cpus: 1, memory: 1024,  disk_gb: 10 }
+      delegate_to: localhost
+      register: deploy_vm
