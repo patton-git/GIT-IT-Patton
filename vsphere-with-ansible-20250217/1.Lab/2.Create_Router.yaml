@@ -33,7 +33,7 @@
           unit_number: 0
           state: present
           type: iso
-          iso_path: "[sa-esxi-01]\ISO\vyos-1.5-rolling-202502130006-generic-amd64.iso"
+          iso_path: "[sa-esxi-01]\\ISO\\vyos-1.5-rolling-202502130006-generic-amd64.iso"
       loop:
       - { vmname: "{{ student_ID }}-Router", guest_id: debian10_64Guest, cpus: 1, memory: 1024,  disk_gb: 10 }
       delegate_to: localhost
