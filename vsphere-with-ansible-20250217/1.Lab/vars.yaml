@@ -3,7 +3,7 @@ ansible_python_interpreter: /bin/python3
 student_ID: "S00"
 
 vcenter_hostname: "sa-vcsa-01.lab.git"
-vcenter_username: "{{ student_ID }}@vclass.kh"
+vcenter_username: "{{ student_ID }}@lab.git"
 vcenter_password: "VMware1!"
 
 datacenter_name: "SA-Datacenter"
