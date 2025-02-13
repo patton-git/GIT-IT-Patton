@@ -1,0 +1,65 @@
+---
+- hosts: localhost
+  vars_files: ./vars.yaml
+  
+  tasks: 
+    - name: VyOS Router Configuration
+      community.vmware.vmware_vm_shell:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: 'false'
+        datacenter: '{{ datacenter_name }}'
+        folder: '{{ folder_prefix + student_ID }}'
+        vm_id: "{{ student_ID + '-Router' }}"
+        vm_id_type: vm_name
+        vm_username: 'vyos'
+        vm_password: 'vyos'
+        vm_shell: /bin/vbash
+        vm_shell_cwd: "/tmp"
+        vm_shell_args: |-
+          -c "source /opt/vyatta/etc/functions/script-template
+          configure
+          set system login user admin full-name Admin_User
+          set system login user admin authentication plaintext-password VMware1!
+          set service ssh port 22
+          set system ipv6 disable
+          
+          set interfaces ethernet eth0 address dhcp
+          set interfaces ethernet eth0 description Outside
+          set interfaces ethernet eth0 ipv6 address no-default-link-local
+          set protocols static route 0.0.0.0/0 next-hop 10.50.141.1
+
+          set system name-server 10.50.141.4
+          set service ntp server kr.pool.ntp.org
+       
+          set interfaces ethernet eth1 vif 10 description 'VLAN 10 - Site A Management'
+          set interfaces ethernet eth1 vif 10 address 10.10.10.1/24
+          set interfaces ethernet eth1 vif 10 ipv6 address no-default-link-local
+          
+          set interfaces ethernet eth1 vif 11 description 'VLAN 11 - Site A Storage'
+          set interfaces ethernet eth1 vif 11 address 10.10.11.1/24
+          set interfaces ethernet eth1 vif 11 ipv6 address no-default-link-local
+
+          set interfaces ethernet eth1 vif 12 description 'VLAN 12 - Site A vMotion'
+          set interfaces ethernet eth1 vif 12 address 10.10.12.1/24
+          set interfaces ethernet eth1 vif 12 ipv6 address no-default-link-local
+          
+          set interfaces ethernet eth1 vif 13 description 'VLAN 13 - Site A Production'
+          set interfaces ethernet eth1 vif 13 address 10.10.13.1/24
+          set interfaces ethernet eth1 vif 13 ipv6 address no-default-link-local
+                        
+          set nat source rule 10 outbound-interface eth0
+          set nat source rule 10 source address 10.10.10.0/24
+          set nat source rule 10 translation address masquerade
+
+          set nat source rule 13 outbound-interface eth0
+          set nat source rule 13 source address 10.10.13.0/24
+          set nat source rule 13 translation address masquerade
+
+          commit
+          save"
+        wait_for_process: True
+        timeout: 180
+      delegate_to: localhost
+      register: shell_command_with_wait_timeout
