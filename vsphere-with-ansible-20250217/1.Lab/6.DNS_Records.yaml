@@ -1,0 +1,71 @@
+---
+- hosts: localhost
+  vars_files: ./vars.yaml
+
+  tasks: 
+
+    - name: Create Folder
+      community.vmware.vmware_guest_file_operation:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: 'false'
+        vm_id: "{{ student_ID + '-DC' }}"
+        vm_id_type: vm_name
+        vm_username: 'Administrator'
+        vm_password: 'VMware1!'
+        directory:
+          path: "c:\\Code"
+          operation: create
+          recurse: false
+      delegate_to: localhost
+
+    - name: Copy powershell script to VM
+      community.vmware.vmware_guest_file_operation:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: 'false'
+        vm_id: "{{ student_ID + '-DC' }}"
+        vm_id_type: vm_name
+        vm_username: 'Administrator'
+        vm_password: 'VMware1!'
+        copy:
+            src: "/mnt/c/Code/06-Add_dns_record.ps1"
+            dest: "c:\\Code\\06-Add_dns_record.ps1"
+            overwrite: true
+      delegate_to: localhost
+
+    - name: Run dns powershell script
+      community.vmware.vmware_vm_shell:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: 'false'
+        vm_id: "{{ student_ID + '-DC' }}"
+        vm_id_type: vm_name
+        vm_username: 'Administrator'
+        vm_password: 'VMware1!'
+        vm_shell: 'c:\windows\system32\windowspowershell\v1.0\powershell.exe'
+        vm_shell_args: '-command "(c:\Code\06-Add_dns_record.ps1)"'
+        vm_shell_cwd: 'c:\Users\Administrator'
+        wait_for_process: True
+        timeout: 60
+      delegate_to: localhost
+
+    - name: Delete copied powershell script
+      community.vmware.vmware_vm_shell:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: 'false'
+        vm_id: "{{ student_ID + '-DC' }}"
+        vm_id_type: vm_name
+        vm_username: 'Administrator'
+        vm_password: 'VMware1!'
+        vm_shell: 'c:\windows\system32\windowspowershell\v1.0\powershell.exe'
+        vm_shell_args: '-command "(Remove-Item -path c:\Code\06-Add_dns_record.ps1)"'
+        vm_shell_cwd: 'c:\Users\Administrator'
+        wait_for_process: True
+      delegate_to: localhost
+      
