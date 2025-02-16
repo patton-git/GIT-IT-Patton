@@ -1,0 +1,73 @@
+---
+- hosts: localhost
+  vars_files: ./vars.yaml
+
+  tasks: 
+    - name: Create SiteA ESXi VMs
+      community.vmware.vmware_guest:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: 'false'
+        datacenter: '{{datacenter_name}}'
+        folder: '{{ folder_prefix + student_ID }}'
+        name: '{{ item.vmname }}'
+        state: poweredon
+        guest_id: vmkernel7Guest
+        esxi_hostname: "{{ esxi_hostname }}"
+        hardware:
+          num_cpus: 2
+          nested_virt: yes
+          memory_mb: 8192
+        disk:
+        - size_gb: 200
+          controller_type: 'paravirtual'
+          controller_number: 0
+          unit_number: 0
+          type: thin
+          datastore: '{{ datastore_name }}'
+        - size_gb: 50
+          controller_type: 'nvme'
+          controller_number: 0
+          unit_number: 0
+          type: thin
+          datastore: '{{ datastore_name }}'
+        - size_gb: 50
+          controller_type: 'nvme'
+          controller_number: 0
+          unit_number: 1
+          type: thin
+          datastore: '{{ datastore_name }}'
+        - size_gb: 200
+          controller_type: 'nvme'
+          controller_number: 0
+          unit_number: 2
+          type: thin
+          datastore: '{{ datastore_name }}'
+        - size_gb: 200
+          controller_type: 'nvme'
+          controller_number: 0
+          unit_number: 3
+          type: thin
+          datastore: '{{ datastore_name }}'
+        networks:
+        - name: "{{ student_ID + '-SA-Mgmt' }}"
+          device_type: vmxnet3
+        - name: "{{ student_ID + '-SA-Mgmt' }}"
+          device_type: vmxnet3
+        - name: "{{ student_ID + '-Trunk' }}"
+          device_type: vmxnet3
+        - name: "{{ student_ID + '-Trunk' }}"
+          device_type: vmxnet3
+        cdrom:
+        - controller_number: 0
+          unit_number: 0
+          state: present
+          type: iso
+          iso_path: "[sa-ESXi-01]\\ISO\\VMware-VMvisor-Installer-8.0U3-24022510.x86_64.iso"
+      loop:
+      - { vmname: "{{ student_ID }}-SA-ESXi-01" }
+      - { vmname: "{{ student_ID }}-SA-ESXi-02" }
+      - { vmname: "{{ student_ID }}-SA-ESXi-03" }
+      delegate_to: localhost
+      register: deploy_vm
