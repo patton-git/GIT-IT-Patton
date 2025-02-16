@@ -1,0 +1,63 @@
+---
+- hosts: localhost
+  vars_files: ./vars.yaml
+
+  tasks: 
+    - name: Create TrueNAS Storage VM
+      community.vmware.vmware_guest:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: 'false'
+        datacenter: '{{datacenter_name}}'
+        folder: '{{ folder_prefix + student_ID }}'
+        name: "{{ student_ID + '-Storage' }}"
+        state: poweredoff
+        guest_id: freebsd13_64Guest
+        esxi_hostname: "{{ esxi_hostname }}"
+        hardware:
+          num_cpus: 2
+          nested_virt: yes
+          memory_mb: 8192
+        disk:
+        - size_gb: 40
+          controller_type: 'paravirtual'
+          controller_number: 0
+          unit_number: 0
+          type: thin
+          datastore: '{{ datastore_name }}'
+        - size_gb: 100
+          controller_type: 'paravirtual'
+          controller_number: 0
+          unit_number: 1
+          type: thin
+          datastore: '{{ datastore_name }}'
+        - size_gb: 100
+          controller_type: 'paravirtual'
+          controller_number: 0
+          unit_number: 2
+          type: thin
+          datastore: '{{ datastore_name }}'
+        - size_gb: 100
+          controller_type: 'paravirtual'
+          controller_number: 0
+          unit_number: 3
+          type: thin
+          datastore: '{{ datastore_name }}'
+        - size_gb: 100
+          controller_type: 'paravirtual'
+          controller_number: 0
+          unit_number: 4
+          type: thin
+          datastore: '{{ datastore_name }}'          
+        networks:
+        - name: "{{ student_ID + '-SA-Storage' }}"
+          device_type: vmxnet3
+        cdrom:
+        - controller_number: 0
+          unit_number: 0
+          state: present
+          type: iso
+          iso_path: "[sa-esxi-01]\\ISO\\TrueNAS-13.0-U6.7.iso"
+      delegate_to: localhost
+      register: deploy_vm
