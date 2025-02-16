@@ -1,0 +1,40 @@
+---
+- hosts: localhost
+  vars_files: ./vars.yaml
+
+  tasks: 
+    - name: Create Windows Template VM
+      community.vmware.vmware_guest:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: 'false'
+        datacenter: '{{datacenter_name}}'
+        folder: '{{ folder_prefix + student_ID }}'
+        name: '{{ item.vmname }}'
+        state: poweredon
+        guest_id: '{{ item.guest_id }}'
+        esxi_hostname: "{{ esxi_hostname }}"
+        hardware:
+          num_cpus: '{{ item.cpus }}'
+          hotadd_cpu: true          
+          memory_mb: '{{ item.memory }}'
+          hotadd_memory: true
+          scsi: paravirtual
+        disk:
+        - size_gb: '{{ item.disk_gb }}'
+          type: thin
+          datastore: '{{ datastore_name }}'
+        networks:
+        - name: '{{ public_net }}'
+          device_type: vmxnet3
+        cdrom:
+        - controller_number: 0
+          unit_number: 0
+          state: present
+          type: iso
+          iso_path: "[sa-esxi-01]\\ISO\\en-us_windows_server_2022_updated_jan_2025_x64_dvd_7b59ccdd.iso"
+      loop:
+      - { vmname: "{{ student_ID }}-Win2022", guest_id: windows2019srvNext_64Guest, cpus: 2, memory: 8192,  disk_gb: 90 }
+      delegate_to: localhost
+      register: deploy_vm
