@@ -1,0 +1,20 @@
+---
+- name: Add DNS records
+  hosts: ad_dns
+  vars:
+    DNS_Records :
+      - { name: haproxy1, ip: 172.16.0.8}
+      - { name: haproxy2, ip: 172.16.0.9}
+      - { name: k8s-api, ip: 172.16.0.10}
+      - { name: k8s-controller1, ip: 172.16.0.11}
+      - { name: k8s-controller2, ip: 172.16.0.12}
+      - { name: k8s-controller3, ip: 172.16.0.13}
+
+
+  tasks:
+    - name: Add an A record to the zone
+      win_shell: |
+        Add-DnsServerResourceRecordA -Name '{{ item.name }}' -ZoneName "vclass.local" -IPv4Address '{{ item.ip }}'
+        Add-DnsServerResourceRecordPtr -Name '{{ item.ip.split('.')[-1] }}' -ZoneName "0.16.172.in-addr.arpa" -PtrDomainName '{{ item.name }}.vclass.local'
+      loop: "{{ DNS_Records }}"
+      ignore_errors: yes  
