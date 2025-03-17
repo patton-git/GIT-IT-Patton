@@ -1,6 +1,7 @@
 ---
 - name: Add DNS records
   hosts: ad_dns
+  gather_facts: no
   vars:
     DNS_Records :
       - { name: haproxy1, ip: 172.16.0.8}
