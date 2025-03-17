@@ -15,6 +15,7 @@ echo -e "[global]\nbreak-system-packages=true" > ~/.config/pip/pip.conf
 pip list
 
 ## Windows Credential 
+pip list | grep -i pywinrm
 pip install requests-credssp --break-system-packages
 
 ## VMware vSphere Automation SDK
