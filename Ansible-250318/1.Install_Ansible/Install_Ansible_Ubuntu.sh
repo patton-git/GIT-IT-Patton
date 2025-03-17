@@ -26,6 +26,4 @@ ls -al ~/.local/lib/python*/site-pack*/
 echo 'export PATH=$PATH:~/.local/bin' >> ~/.bashrc
 echo 'export ANSIBLE_CONFIG=./ansible.cfg'  >> ~/.bashrc
 source ~/.bashrc
-echo $PATH
-echo $ANSIBLE_CONFIG
 echo 'autocmd FileType yaml setlocal ai ts=2 sw=2 et nu' >> ~/.vimrc
