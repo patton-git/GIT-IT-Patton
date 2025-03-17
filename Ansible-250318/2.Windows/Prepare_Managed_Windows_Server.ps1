@@ -30,7 +30,7 @@ New-ItemProperty @tokenFilterParams
 $certParams = @{
     CertStoreLocation = 'Cert:\LocalMachine\My'
     DnsName           = $env:COMPUTERNAME
-    NotAfter          = (Get-Date).AddYears(1)
+    NotAfter          = (Get-Date).AddYears(10)
     Provider          = 'Microsoft Software Key Storage Provider'
     Subject           = "CN=$env:COMPUTERNAME"
 }
