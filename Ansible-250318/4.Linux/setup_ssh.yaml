@@ -9,7 +9,7 @@
   tasks:
     - name: Create .ssh directory
       ansible.builtin.file:
-        path: /home/{{ ansible_user }}/.ssh        
+        path: /home/{{ ansible_user }}/.ssh
         state: directory
         owner: {{ ansible_user }}
         group: {{ ansible_user }}
