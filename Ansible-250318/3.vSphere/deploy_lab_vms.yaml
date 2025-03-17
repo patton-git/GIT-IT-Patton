@@ -1,0 +1,79 @@
+---
+- name: Deploy Linux VMs
+  hosts: localhost
+  gather_facts: no
+  vars:
+    ansible_python_interpreter: /bin/python3
+
+    student_id: "A00"                                ## 해당값을 변경해 주세요. 폴더/스위치/포트그룹/VM명을 유니크하게 사용하기 위해서 사용됩니다.
+
+    vcenter_hostname: "sa-vcsa-01.lab.git"           ## student_id 값에 따라서 접속해야할 vCenter가 다른경우에는 변경해주시길 바랍니다.
+    vcenter_username: "administrator@vsphere.lab"
+    vcenter_password: "VMware1!"
+
+    datacenter_name: "SA-Datacenter"                 ## student_id 값에 따라서 접속해야할 vCenter/Datacenter가 다른경우에는 변경해주시길 바랍니다.
+    cluster_name: "SA-vSAN"                          ## student_id 값에 따라서 접속해야할 vCenter/Cluster가 다른경우에는 변경해주시길 바랍니다.
+    esxi_hostname: "sa-esxi-01.lab.git"              ## student_id 값에 따라서 접속해야할 vCenter/ESXi서버가 다른경우에는 변경해주시길 바랍니다.
+    esxi_username: "root"
+    esxi_password: "VMware1!"
+
+    parent_folder: "3.SA-Students/"                  ## student_id 값에 따라서 접속해야할 vCenter/VM Folder가 다른경우에는 변경해주시길 바랍니다.
+
+    datastore_name: "sa-vSAN"                        ## student_id 값에 따라서 접속해야할 vCenter/Datastore가 다른경우에는 변경해주시길 바랍니다.
+
+    template_jumpbox: "Temp-Rocky"
+    snapshot_name: "Installed"
+    vm_portgroup: "{{ student_id }}-Ansible"         
+    Linux_VMs:
+    - { hostname: haproxy1, ip: 172.16.0.8 }
+    - { hostname: haproxy2, ip: 172.16.0.9 }
+    - { hostname: k8s-contoller1, ip: 172.16.0.11 }
+    - { hostname: k8s-contoller2, ip: 172.16.0.12 }
+    - { hostname: k8s-contoller3, ip: 172.16.0.13 }
+
+  tasks:
+  - name: 01. Deploy Linux vms
+    community.vmware.vmware_guest:
+      hostname: '{{ vcenter_hostname }}'
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: '{{ student_id }}-{{ item.hostname }}'
+      state: "poweredon"
+      datacenter: '{{ datacenter_name }}'
+      folder: '{{ parent_folder }}{{ student_id }}'
+      esxi_hostname: '{{ esxi_hostname }}'
+      datastore: '{{ datastore_name }}'
+      template: '{{ template_jumpbox }}'
+      linked_clone: True
+      snapshot_src: "{{ snapshot_name }}"
+      networks:
+        - name: "{{ vm_portgroup }}"
+          label: "Network adapter 1"
+          connected: True
+          start_connected: True
+          ip: "{{ item.ip }}"
+          netmask: 255.255.255.0          
+          gateway:  172.16.0.1
+      customization:
+        domain: "vclass.local"
+        hostname: " {{ item.hostname }}"
+        dns_servers:
+          - 172.16.0.1
+        dns_suffix:
+          - vclass.local
+    loop: "{{ Linux_VMs }}"    
+    delegate_to: localhost
+
+  - name: Network Connect
+    community.vmware.vmware_guest_network:
+      hostname: '{{ vcenter_hostname }}'
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no      
+      folder: '{{ parent_folder }}{{ student_id }}'
+      name: '{{ student_id }}-{{ item.hostname }}'
+      label: "Network adapter 1"
+      network_name: "{{ vm_portgroup }}"
+    loop: "{{ Linux_VMs }}"
+    delegate_to: localhost
