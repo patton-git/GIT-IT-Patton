@@ -1,0 +1,23 @@
+all:
+  children:
+    loadbalancers:
+      hosts:
+        haproxy1:
+          keepalived_state: MASTER
+          keepalived_priority: 100
+          local_ip: 172.16.0.8
+          peer_ip: 172.16.0.9
+        haproxy2:
+          keepalived_state: BACKUP
+          keepalived_priority: 99
+          local_ip: 172.16.0.9
+          peer_ip: 172.16.0.8
+      vars:
+        vault_file: ./vault.yaml
+        vip: 172.16.0.10
+
+    kubernetes:
+      hosts:
+        k8s-controller1:
+        k8s-controller2:
+        k8s-controller3:
