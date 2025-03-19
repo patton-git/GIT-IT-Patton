@@ -26,7 +26,6 @@
     prompt: "Which snapshot task want? (create/revert/remove)"
     private: no
     default: "create"
-    validate: "'%s' in ['create', 'revert', 'remove']"
 
   tasks:
   - name: Create a snapshot
