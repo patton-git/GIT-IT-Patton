@@ -22,11 +22,11 @@
     snapshot_name: before_task
     
   vars_prompt:
-   - name: snapshot_task
-     prompt: "Which snapshot task want? (create/revert/remove)"
-     private: no
-     default: "create"
-     validate: "'%s' in ['create', 'revert', 'remove']"
+  - name: snapshot_task
+    prompt: "Which snapshot task want? (create/revert/remove)"
+    private: no
+    default: "create"
+    validate: "'%s' in ['create', 'revert', 'remove']"
 
   tasks:
   - name: Create a snapshot
