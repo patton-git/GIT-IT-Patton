@@ -30,12 +30,12 @@
   handlers:
   - name: Start VM after revert
     community.vmware.vmware_guest_powerstate:
-      hostname: "{{ vcenter_host }}"
-      username: "{{ vcenter_user }}" 
-      password: "{{ vcenter_pass }}"
-      name: "{{ student_id }}-{{ item }}"
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}" 
+      password: "{{ vcenter_password }}"
+      name: "{{ student_id }}-{{ item.hostname }}"
       state: powered-on
-    loop: "{{ Linux_VMs }}"    
+    loop: "{{ Linux_VMs }}"  
 
   tasks:
   - name: Create a snapshot
@@ -51,7 +51,6 @@
     loop: "{{ Linux_VMs }}"    
     delegate_to: localhost
     when: snapshot_task == "create"
-    notify: Start VM After Revert
   
   - name: Revert to a snapshot
     community.vmware.vmware_guest_snapshot:
@@ -66,6 +65,7 @@
     loop: "{{ Linux_VMs }}"    
     delegate_to: localhost
     when: snapshot_task == "revert"
+    notify: Start VM after revert
   
   - name: Remove a snapshot
     community.vmware.vmware_guest_snapshot:
