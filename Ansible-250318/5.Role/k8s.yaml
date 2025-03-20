@@ -3,10 +3,10 @@
   roles:
     - loadbalancer
 
-- hosts: controllers
-  roles:
-    - controller
+#- hosts: controllers
+#  roles:
+#    - controller
 
-- hosts: workers
-  roles:
-    - worker
+#- hosts: workers
+#  roles:
+#    - worker
