@@ -11,6 +11,8 @@
       - net-tools
       - haproxy
       - keepalived
+      - python3-libselinux
+      - python3-libsemanage
 
   tasks:
     - name: Install necessary packages
