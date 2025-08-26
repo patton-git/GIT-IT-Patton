@@ -73,4 +73,4 @@ Enable-WSManCredSSP -Role Server -Force
 winrm set winrm/config/client/auth '@{CredSSP="true"}'
 
 ## To test HTTPS
-winrs -r:https://ad:5986/wsman -u:administrator@vclass.local -p:VMware1! -ssl ipconfig
+winrs -r:https://dc:5986/wsman -u:administrator@vclass.local -p:VMware123! -ssl ipconfig
