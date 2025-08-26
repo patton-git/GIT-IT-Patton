@@ -120,28 +120,3 @@
     delegate_to: localhost
     register: lab_vm_creation_result
     when: lab_mgmt_port_creation_result.msg == "All items completed"
-
-  - name: 06. waiting DC VM Booting
-    wait_for:
-      timeout: 120
-    delegate_to: localhost
-
-  - name: 07. Install HopToDesk Program in DC VM
-    community.vmware.vmware_vm_shell:
-      hostname: "{{ vcenter_hostname }}"
-      username: "{{ vcenter_username }}"
-      password: "{{ vcenter_password }}"
-      validate_certs: false
-      vm_id: "{{ item.id }}-DC"
-      vm_id_type: vm_name
-      vm_username: Administrator
-      vm_password: VMware123!
-      vm_shell: 'c:\windows\system32\windowspowershell\v1.0\powershell.exe'
-      vm_shell_args: '-command "(c:\Material\HopToDesk.exe)"'
-      vm_shell_cwd: 'c:\Users\Administrator'
-      wait_for_process: True
-      timeout: 240
-    loop: "{{ LAB_SID }}"
-    delegate_to: localhost
-    register: Install_Program_result
-
