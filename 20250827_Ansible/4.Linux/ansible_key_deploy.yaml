@@ -1,0 +1,37 @@
+---
+- name: Deploy SSH Key
+  hosts: all
+  become: yes
+  vars:
+    ansible_user: ubuntu
+    ansible_password: "Ubuntu1!"  # 최초 접속 시 필요
+  
+  tasks:
+    - name: Create .ssh directory
+      ansible.builtin.file:
+        path: /home/{{ ansible_user }}/.ssh
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0700'
+        
+    - name: Add public key
+      ansible.builtin.copy:
+        src: ~/.ssh/ansible_key.pub
+        dest: /home/{{ ansible_user }}/.ssh/authorized_keys
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0600'
+        
+    - name: Configure SSH Daemon
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PubkeyAuthentication'
+        line: 'PubkeyAuthentication yes'
+      notify: restart sshd
+
+  handlers:
+    - name: restart sshd
+      ansible.builtin.service:
+        name: sshd
+        state: restarted
