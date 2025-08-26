@@ -5,20 +5,23 @@
   vars:
     ansible_python_interpreter: /bin/python3
 
-    student_id: "S00"                                ## 해당값을 변경해 주세요. 폴더/스위치/포트그룹/VM명을 유니크하게 사용하기 위해서 사용됩니다.
+    student_id: "S00"   ## 해당값을 변경해 주세요. 폴더/스위치/포트그룹/VM명을 유니크하게 사용하기 위해서 사용됩니다.
 
-    vcenter_hostname: "sa-vcsa-01.lab.git"           ## student_id 값에 따라서 접속해야할 vCenter가 다른경우에는 변경해주시길 바랍니다.
-    vcenter_username: "administrator@vsphere.lab"
-    vcenter_password: "VMware1!"
-    datacenter_name: "SA-Datacenter"                 ## student_id 값에 따라서 접속해야할 vCenter/Datacenter가 다른경우에는 변경해주시길 바랍니다.
-    parent_folder: "3.SA-Students/"                  ## student_id 값에 따라서 접속해야할 vCenter/VM Folder가 다른경우에는 변경해주시길 바랍니다.
+    vcenter_hostname: "vcsa.lab.git"
+    vcenter_username: "{{ student_id | lower }}@lab.git"  # | lower filter로 소문자 변환 가능
+    vcenter_password: "VMware123!"
+
+    datacenter_name: "Datacenter" 
+
+    parent_folder: "2.Students/" 
 
     Linux_VMs:
-    - { hostname: haproxy1, ip: 172.16.0.8 }
-    - { hostname: haproxy2, ip: 172.16.0.9 }
-    - { hostname: k8s-contoller1, ip: 172.16.0.11 }
-    - { hostname: k8s-contoller2, ip: 172.16.0.12 }
-    - { hostname: k8s-contoller3, ip: 172.16.0.13 }
+    - { hostname: haproxy1, ip: 10.10.10.21 }
+    - { hostname: haproxy2, ip: 10.10.10.22 }
+    - { hostname: k8s-contoller1, ip: 10.10.10.31 }
+    - { hostname: k8s-contoller2, ip: 10.10.10.32 }
+    - { hostname: k8s-contoller3, ip: 10.10.10.33 }
+
     snapshot_name: before_task
     
   vars_prompt:
