@@ -1,0 +1,95 @@
+---
+- hosts: loadbalencers
+  tasks:
+    - name: Install necessary packages
+      yum:
+        name:
+          - curl
+          - vim
+          - net-tools
+        state: present
+
+    - name: Set SELinux boolean for HAProxy
+      command: setsebool -P haproxy_connect_any 1
+
+    - name: Configure firewall to allow specific ports
+      firewalld:
+        port: "{{ item }}"
+        permanent: true
+        state: enabled
+        immediate: yes
+      loop:
+        - "80/tcp"
+        - "443/tcp"
+        - "6443/tcp"
+
+    - name: Reload firewalld
+      command: firewall-cmd --reload
+
+    - name: Install HAProxy
+      yum:
+        name: haproxy
+        state: present
+
+    - name: Configure HAProxy
+      copy:
+        mode: '0644'
+        dest: /etc/haproxy/haproxy.cfg
+        content: |
+          global
+              log /dev/log  local0 warning
+              chroot      /var/lib/haproxy
+              pidfile     /var/run/haproxy.pid
+              maxconn     4000
+              user        haproxy
+              group       haproxy
+              daemon
+              
+             stats socket /var/lib/haproxy/stats
+
+          defaults
+            log global
+            option  httplog
+            option  dontlognull
+                  timeout connect 5000
+                  timeout client 50000
+                  timeout server 50000
+
+          frontend k8s-controller
+            bind *:6443
+            mode tcp
+            option tcplog
+            default_backend k8s-controller
+
+          backend k8s-controller
+              mode tcp
+              option tcplog
+              option tcp-check
+              balance roundrobin
+              default-server inter 10s downinter 5s rise 2 fall 2 slowstart 60s maxconn 250 maxqueue 256 weight 100
+              server k8s-controller1 10.10.10.31:6443 check
+              server k8s-controller2 10.10.10.32:6443 check
+              server k8s-controller3 10.10.10.33:6443 check
+
+    - name: Enable and start HAProxy
+      service:
+        name: haproxy
+        enabled: yes
+        state: started
+
+    - name: Install keepalived
+      yum:
+        name: keepalived
+        state: present
+
+    - name: Configure keepalived
+      template:
+        src: keepalived.conf.j2
+        dest: /etc/keepalived/keepalived.conf
+        mode: '0644'
+
+    - name: Enable and start keepalived
+      service:
+        name: keepalived
+        enabled: yes
+        state: started
