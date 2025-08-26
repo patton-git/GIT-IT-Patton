@@ -105,7 +105,7 @@
       name: "{{ item.id }}-DC"
       state: "poweredon"
       datacenter: "{{ datacenter_name }}"
-      folder: "{{ item.parent }}{{ item.id }}"
+      folder: "{{ parent_folder }}{{ item.id }}"
       esxi_hostname: "{{ item.host }}"
       datastore: "{{ datastore_name }}"
       template: "{{ template_jumpbox }}"
