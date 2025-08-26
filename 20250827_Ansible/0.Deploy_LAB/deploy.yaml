@@ -14,8 +14,6 @@
     datastore_name: "vsanDatastore" 
     template_jumpbox: "250827-DC"
     snapshot_name: "Template"
-    vm_portgroup:
-    - "{{ student_id }}-Mgmt"
 
     LAB_SID: 
     - { id: S00, host: 10.50.141.11 }
