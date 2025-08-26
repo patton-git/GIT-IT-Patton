@@ -1,0 +1,79 @@
+---
+- name: Deploy Linux VMs
+  hosts: localhost
+  gather_facts: no
+  vars:
+    ansible_python_interpreter: /bin/python3
+
+    student_id: "S00"   ## 해당값을 변경해 주세요. 폴더/스위치/포트그룹/VM명을 유니크하게 사용하기 위해서 사용됩니다.
+
+    vcenter_hostname: "vcsa.lab.git"
+    vcenter_username: "{{ student_id | lower }}@lab.git"  # | lower filter로 소문자 변환 가능
+    vcenter_password: "VMware123!"
+
+    datacenter_name: "Datacenter" 
+
+    esxi_hostname: "esxi-01.lab.git"  ## student_id 값에 따라서 접속해야할 vCenter/ESXi서버가 다른경우에는 변경해주시길 바랍니다.
+    esxi_username: "root"
+    esxi_password: "VMware123!"
+
+    parent_folder: "2.Students/" 
+
+    datastore_name: "vsanDatastore" 
+
+    template_jumpbox: "Temp-UbuntuSvr-24.04.3"
+    snapshot_name: "Installed"
+    vm_portgroup: "{{ student_id }}-Mgmt"         
+    Linux_VMs:
+    - { hostname: haproxy1, ip: 10.10.10.21 }
+    - { hostname: haproxy2, ip: 10.10.10.22 }
+    - { hostname: k8s-contoller1, ip: 10.10.10.31 }
+    - { hostname: k8s-contoller2, ip: 10.10.10.32 }
+    - { hostname: k8s-contoller3, ip: 10.10.10.33 }
+
+  tasks:
+  - name: 01. Deploy Linux vms
+    community.vmware.vmware_guest:
+      hostname: '{{ vcenter_hostname }}'
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: '{{ student_id }}-{{ item.hostname }}'
+      state: "poweredon"
+      datacenter: '{{ datacenter_name }}'
+      folder: '{{ parent_folder }}{{ student_id }}'
+      esxi_hostname: '{{ esxi_hostname }}'
+      datastore: '{{ datastore_name }}'
+      template: '{{ template_jumpbox }}'
+      linked_clone: True
+      snapshot_src: "{{ snapshot_name }}"
+      networks:
+        - name: "{{ vm_portgroup }}"
+          label: "Network adapter 1"
+          connected: True
+          start_connected: True
+          ip: "{{ item.ip }}"
+          netmask: 255.255.255.0          
+          gateway:  10.10.10.1
+      customization:
+        domain: "vclass.local"
+        hostname: " {{ item.hostname }}"
+        dns_servers:
+          - 10.10.10.1
+        dns_suffix:
+          - vclass.local
+    loop: "{{ Linux_VMs }}"    
+    delegate_to: localhost
+
+  - name: Network Connect
+    community.vmware.vmware_guest_network:
+      hostname: '{{ vcenter_hostname }}'
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no      
+      folder: '{{ parent_folder }}{{ student_id }}'
+      name: '{{ student_id }}-{{ item.hostname }}'
+      label: "Network adapter 1"
+      network_name: "{{ vm_portgroup }}"
+    loop: "{{ Linux_VMs }}"
+    delegate_to: localhost
