@@ -4,31 +4,50 @@
   gather_facts: no
   vars:
     ansible_python_interpreter: /bin/python3
+    vcenter_hostname: "vcsa.lab.git"
     vcenter_username: "s00@lab.git"
     vcenter_password: "VMware123!"
+    datacenter_name: "Datacenter" 
     esxi_username: "root"
     esxi_password: "VMware123!"
+    parent_folder: "2.Students/" 
+    datastore_name: "vsanDatastore" 
     template_jumpbox: "250827-DC"
     snapshot_name: "Template"
+    vm_portgroup:
+    - "{{ student_id }}-Mgmt"
 
     LAB_SID: 
-    - { id: S00, vcsa: sa-vcsa-01.lab.git, dcn: Datacenter, host: esxi-01.lab.git, parent: "2.Students/", dsn: vsanDatastore }
-    - { id: S01, vcsa: sa-vcsa-01.lab.git, dcn: Datacenter, host: esxi-01.lab.git, parent: "3.Students/", dsn: sa-vSAN }
-    - { id: S02, vcsa: sa-vcsa-01.lab.git, dcn: Datacenter, host: esxi-01.lab.git, parent: "3.Students/", dsn: sa-vSAN }
-    - { id: S03, vcsa: sa-vcsa-01.lab.git, dcn: Datacenter, host: esxi-01.lab.git, parent: "3.Students/", dsn: sa-vSAN }
-    - { id: S04, vcsa: sa-vcsa-01.lab.git, dcn: Datacenter, host: esxi-01.lab.git, parent: "3.Students/", dsn: sa-vSAN }
+    - { id: S00, host: 10.50.141.11 }
+    - { id: S01, host: 10.50.141.12 }
+    - { id: S02, host: 10.50.141.13 }
+    - { id: S03, host: 10.50.141.14 }
+    - { id: S04, host: 10.50.141.11 }
+    - { id: S05, host: 10.50.141.12 }
+    - { id: S06, host: 10.50.141.13 }
+    - { id: S07, host: 10.50.141.14 }
+    - { id: S08, host: 10.50.141.11 }
+    - { id: S09, host: 10.50.141.12 }
+    - { id: S10, host: 10.50.141.13 }
+    - { id: S11, host: 10.50.141.14 }
+    - { id: S12, host: 10.50.141.11 }
+    - { id: S13, host: 10.50.141.12 }
+    - { id: S14, host: 10.50.141.13 }
+    - { id: S15, host: 10.50.141.14 }
+    - { id: S16, host: 10.50.141.12 }
+    - { id: S17, host: 10.50.141.13 }
 
   tasks:
   - name: 01. Create LAB VM Folder
     community.vmware.vcenter_folder:
-      hostname: "{{ item.vcsa }}"
+      hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       validate_certs: no
-      datacenter: "{{ item.dcn }}"
+      datacenter: "{{ datacenter_name }}"
       folder_type: vm
       folder_name: "{{ item.id }}"
-      parent_folder: "{{ item.parent }}"
+      parent_folder: "{{ parent_folder }}"
       state: present
     loop: "{{ LAB_SID }}"
     delegate_to: localhost
@@ -41,11 +60,15 @@
       password: "{{ esxi_password }}"
       validate_certs: false
       switch: "{{ item.id }}"
+      security:
+        promiscuous_mode: True
+        mac_changes: True
+        forged_transmits: True      
     loop: "{{ LAB_SID }}"
     delegate_to: localhost
     register: lab_switch_creation_result
 
-  - name: 03. Adding Portgroup to LAB Switch
+  - name: 03. Adding Trunk Portgroup to LAB Switch
     community.vmware.vmware_portgroup:
       hostname: "{{ item.host }}"
       username: "{{ esxi_username }}"
@@ -53,72 +76,70 @@
       esxi_hostname: "{{ item.host }}"
       validate_certs: no
       switch: "{{ item.id }}"
-      portgroup: "{{ item.id }}-Ansible"
+      portgroup: "{{ item.id }}-Trunk"
+      vlan_id: 4095
     loop: "{{ LAB_SID }}"
     delegate_to: localhost
-    register: lab_port_creation_result
+    register: lab_trunk_port_creation_result
     when: lab_switch_creation_result.msg == "All items completed"
 
-  - name: 04. Deploy Ansible(AD-NAT-WSL) vm
+  - name: 04. Adding Mgmt Portgroup to LAB Switch
+    community.vmware.vmware_portgroup:
+      hostname: "{{ item.host }}"
+      username: "{{ esxi_username }}"
+      password: "{{ esxi_password }}"
+      esxi_hostname: "{{ item.host }}"
+      validate_certs: no
+      switch: "{{ item.id }}"
+      portgroup: "{{ item.id }}-Mgmt"
+      vlan_id: 10
+    loop: "{{ LAB_SID }}"
+    delegate_to: localhost
+    register: lab_mgmt_port_creation_result
+    when: lab_trunk_port_creation_result.msg == "All items completed"
+
+  - name: 05. Deploy Lab DC vm
     community.vmware.vmware_guest:
-      hostname: "{{ item.vcsa }}"
+      hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       validate_certs: no
-      name: "{{ item.id }}-Ansible"
+      name: "{{ item.id }}-DC"
       state: "poweredon"
-      datacenter: "{{ item.dcn }}"
+      datacenter: "{{ datacenter_name }}"
       folder: "{{ item.parent }}{{ item.id }}"
       esxi_hostname: "{{ item.host }}"
-      datastore: "{{ item.dsn }}"
+      datastore: "{{ datastore_name }}"
       template: "{{ template_jumpbox }}"
       linked_clone: True
       snapshot_src: "{{ snapshot_name }}"
       networks:
-        - name: "VM-10.50.141.x"
+        - name: "{{ item.id }}-Trunk"
           label: "Network adapter 1"
-        - name: "{{ item.id }}-Ansible"
+        - name: "VM-10.50.141"
           label: "Network adapter 2"
     loop: "{{ LAB_SID }}"
     delegate_to: localhost
     register: lab_vm_creation_result
-    when: lab_port_creation_result.msg == "All items completed"
+    when: lab_mgmt_port_creation_result.msg == "All items completed"
 
-  - name: 05. waiting Ansible VM Booting
+  - name: 06. waiting DC VM Booting
     wait_for:
       timeout: 120
     delegate_to: localhost
 
-  - name: 06. Copy Install script to VM
-    community.vmware.vmware_guest_file_operation:
-      hostname: "{{ item.vcsa }}"
-      username: "{{ vcenter_username }}"
-      password: "{{ vcenter_password }}"
-      validate_certs: false
-      vm_id: "{{ item.id}}-Ansible"
-      vm_id_type: vm_name
-      vm_username: 'Administrator'
-      vm_password: 'VMware1!'
-      copy:
-        src: "/mnt/c/ansible/20250318_Ansible/install.ps1"
-        dest: "c:\\Code\\install.ps1"
-        overwrite: true
-    loop: "{{ LAB_SID }}"
-    delegate_to: localhost
-    register: copy_script_result
-
-  - name: 07. Install AnyViewer Program in Ansible VM
+  - name: 07. Install HopToDesk Program in DC VM
     community.vmware.vmware_vm_shell:
-      hostname: "{{ item.vcsa }}"
+      hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       validate_certs: false
-      vm_id: "{{ item.id }}-Ansible"
+      vm_id: "{{ item.id }}-DC"
       vm_id_type: vm_name
       vm_username: Administrator
       vm_password: VMware1!
       vm_shell: 'c:\windows\system32\windowspowershell\v1.0\powershell.exe'
-      vm_shell_args: '-command "(c:\Code\install.ps1)"'
+      vm_shell_args: '-command "(c:\Material\HopToDesk.exe)"'
       vm_shell_cwd: 'c:\Users\Administrator'
       wait_for_process: True
       timeout: 240
@@ -126,6 +147,3 @@
     delegate_to: localhost
     register: Install_Program_result
 
-#  - name: Check Previous Result
-#    debug:
-#      msg: "{{ Install_Program_result }}"
