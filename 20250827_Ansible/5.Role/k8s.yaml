@@ -1,0 +1,12 @@
+---
+- hosts: loadbalancers
+  roles:
+    - loadbalancer
+
+#- hosts: controllers
+#  roles:
+#    - controller
+
+#- hosts: workers
+#  roles:
+#    - worker
