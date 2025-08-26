@@ -4,19 +4,19 @@
   gather_facts: no
   vars:
     ansible_python_interpreter: /bin/python3
-    vcenter_username: "administrator@vsphere.lab"
-    vcenter_password: "VMware1!"
+    vcenter_username: "s00@lab.git"
+    vcenter_password: "VMware123!"
     esxi_username: "root"
-    esxi_password: "VMware1!"
-    template_jumpbox: "Temp-Ansible"
-    snapshot_name: "Installed"
+    esxi_password: "VMware123!"
+    template_jumpbox: "250827-DC"
+    snapshot_name: "Template"
 
     LAB_SID: 
-    - { id: A00, vcsa: sa-vcsa-01.lab.git, dcn: SA-Datacenter, host: sa-esxi-01.lab.git, parent: "3.SA-Students/", dsn: sa-vSAN }
-    - { id: A01, vcsa: sa-vcsa-01.lab.git, dcn: SA-Datacenter, host: sa-esxi-01.lab.git, parent: "3.SA-Students/", dsn: sa-vSAN }
-    - { id: A02, vcsa: sa-vcsa-01.lab.git, dcn: SA-Datacenter, host: sa-esxi-01.lab.git, parent: "3.SA-Students/", dsn: sa-vSAN }
-    - { id: A03, vcsa: sa-vcsa-01.lab.git, dcn: SA-Datacenter, host: sa-esxi-01.lab.git, parent: "3.SA-Students/", dsn: sa-vSAN }
-    - { id: A04, vcsa: sa-vcsa-01.lab.git, dcn: SA-Datacenter, host: sa-esxi-01.lab.git, parent: "3.SA-Students/", dsn: sa-vSAN }
+    - { id: S00, vcsa: sa-vcsa-01.lab.git, dcn: Datacenter, host: esxi-01.lab.git, parent: "2.Students/", dsn: vsanDatastore }
+    - { id: S01, vcsa: sa-vcsa-01.lab.git, dcn: Datacenter, host: esxi-01.lab.git, parent: "3.Students/", dsn: sa-vSAN }
+    - { id: S02, vcsa: sa-vcsa-01.lab.git, dcn: Datacenter, host: esxi-01.lab.git, parent: "3.Students/", dsn: sa-vSAN }
+    - { id: S03, vcsa: sa-vcsa-01.lab.git, dcn: Datacenter, host: esxi-01.lab.git, parent: "3.Students/", dsn: sa-vSAN }
+    - { id: S04, vcsa: sa-vcsa-01.lab.git, dcn: Datacenter, host: esxi-01.lab.git, parent: "3.Students/", dsn: sa-vSAN }
 
   tasks:
   - name: 01. Create LAB VM Folder
