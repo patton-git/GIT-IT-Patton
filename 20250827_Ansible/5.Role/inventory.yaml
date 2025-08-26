@@ -1,0 +1,29 @@
+all:
+  children:
+    loadbalancers:
+      hosts:
+        haproxy1:
+          keepalived_state: MASTER
+          keepalived_priority: 100
+          local_ip: 10.10.10.21
+          peer_ip: 10.10.10.22
+        haproxy2:
+          keepalived_state: BACKUP
+          keepalived_priority: 99
+          local_ip: 10.10.10.22
+          peer_ip: 10.10.10.21
+      vars:
+        vault_file: ./vault.yaml
+        vip: 10.10.10.20
+
+    k8s-controllers:
+      hosts:
+        k8s-controller1:
+        k8s-controller2:
+        k8s-controller3:
+        
+    k8s-workers:
+      hosts:
+        k8s-worker1:
+        k8s-worker2:
+        k8s-worker3:
