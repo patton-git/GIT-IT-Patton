@@ -1,0 +1,13 @@
+---
+firewall_ports:
+  - "80/tcp"
+  - "443/tcp"
+  - "6443/tcp"
+packages:
+  - curl
+  - vim
+  - net-tools
+  - haproxy
+  - keepalived
+  - python3-libselinux
+  - python3-libsemanage
