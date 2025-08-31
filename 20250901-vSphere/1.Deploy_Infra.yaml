@@ -80,14 +80,14 @@
 
   - name: 03. Adding LAB Portgroups to LAB Switch
     community.vmware.vmware_portgroup:
-      hostname: "{{ item.host }}"
+      hostname: "{{ item[0].host }}"
       username: "{{ esxi_username }}"
       password: "{{ esxi_password }}"
       esxi_hostname: "{{ item[0].host }}"
       validate_certs: no
       switch: "{{ item[0].id }}"
       portgroup: "{{ item[0].id }}{{ item[1].name }}"
-      vlan_id: {{ item[1].vid }}
+      vlan_id: "{{ item[1].vid }}"
     loop: "{{ SID_ESXi | product(LAB_PGs) | list }}"
     delegate_to: localhost
     register: lab_portgroups_creation_result
