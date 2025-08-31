@@ -88,10 +88,10 @@
       switch: "{{ item[0].id }}"
       portgroup: "{{ item[0].id }}{{ item[1].name }}"
       vlan_id: "{{ item[1].vid }}"
-    loop: "{{ SID_ESXi | product(LAB_PGs) | list }}"
+    loop: "{{ LAB_SID | product(LAB_PGs) | list }}"
     delegate_to: localhost
     register: lab_portgroups_creation_result
-    when: lab_switch_creation_result.msg == "All items completed"
+#    when: lab_switch_creation_result.msg == "All items completed"
 
   - name: 05. Deploy Lab DC vm
     community.vmware.vmware_guest:
@@ -100,7 +100,6 @@
       password: "{{ vcenter_password }}"
       validate_certs: no
       name: "{{ item.id }}-DC"
-      state: "poweredon"
       datacenter: "{{ datacenter_name }}"
       folder: "{{ parent_folder }}{{ item.id }}"
       esxi_hostname: "{{ item.host }}"
@@ -108,6 +107,21 @@
       template: "{{ template_jumpbox }}"
       linked_clone: True
       snapshot_src: "{{ snapshot_name }}"
+    loop: "{{ LAB_SID }}"
+    delegate_to: localhost
+    register: lab_dc_creation_result
+
+  - name: 06. Change Lab DC vm networks
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ item.id }}-DC"
+      datacenter: "{{ datacenter_name }}"
+      folder: "{{ parent_folder }}{{ item.id }}"
+      esxi_hostname: "{{ item.host }}"
+      datastore: "{{ datastore_name }}"
       networks:
         - name: "{{ item.id }}-SA-Mgmt"
           label: "Network adapter 1"
@@ -117,9 +131,21 @@
           label: "Network adapter 3"
     loop: "{{ LAB_SID }}"
     delegate_to: localhost
+
+
+  - name: 07. Poweron Lab DC vm
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ item.id }}-DC"
+      state: "poweredon"
+    loop: "{{ LAB_SID }}"
+    delegate_to: localhost
     register: lab_dc_creation_result
 
-  - name: 06. Create LAB ESXi VMs
+  - name: 08. Create LAB ESXi VMs
     community.vmware.vmware_guest:
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
