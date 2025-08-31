@@ -40,7 +40,7 @@
     - { name: -SA-Mgmt,    vid:   10 }
     - { name: -SA-iSCSI,   vid:   11 }
     - { name: -SA-vMotion, vid:   12 }
-    - { name: -SA-Prod,   vid:   13 }
+    - { name: -SA-Prod,    vid:   13 }
 
     LAB_ESXi_VMs:
     - "-SA-ESXi-01"
