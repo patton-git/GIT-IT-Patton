@@ -6,9 +6,9 @@
     DNS_Records:
       - { name: loginsight, ip: 10.10.10.9 }
       - { name: sa-vcsa-01, ip: 10.10.10.10 }
-      - { name: sa-esxi-01, ip: 10.10.10.22 }
-      - { name: sa-esxi-02, ip: 10.10.10.31 }
-      - { name: sa-esxi-03, ip: 10.10.10.32 }
+      - { name: sa-esxi-01, ip: 10.10.10.11 }
+      - { name: sa-esxi-02, ip: 10.10.10.12 }
+      - { name: sa-esxi-03, ip: 10.10.10.13 }
 
   tasks:
     - name: Add Forward DNS records
