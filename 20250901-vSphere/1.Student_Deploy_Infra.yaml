@@ -1,0 +1,159 @@
+---
+- name: Deploy Ansible Lab
+  hosts: localhost
+  gather_facts: no
+  vars:
+    ansible_python_interpreter: /bin/python3
+    vcenter_hostname: "vcsa.lab.git"
+#    vcenter_username: "s00@lab.git"     #계정명 수정후 사용하기 
+    vcenter_password: "VMware123!"
+    datacenter_name: "Datacenter" 
+    esxi_username: "root"
+    esxi_password: "VMware123!"
+    parent_folder: "2.Students/" 
+    datastore_name: "vsanDatastore" 
+    template_jumpbox: "Template-DC"
+    snapshot_name: "3"
+
+    LAB_SID: 
+#    - { id: S00, host: 10.50.141.11 }
+#    - { id: S01, host: 10.50.141.12 }
+#    - { id: S02, host: 10.50.141.13 }
+#    - { id: S03, host: 10.50.141.14 }
+#    - { id: S04, host: 10.50.141.11 }
+#    - { id: S05, host: 10.50.141.12 }
+#    - { id: S06, host: 10.50.141.13 }
+#    - { id: S07, host: 10.50.141.14 }
+#    - { id: S08, host: 10.50.141.11 }
+#    - { id: S09, host: 10.50.141.12 }
+#    - { id: S10, host: 10.50.141.13 }
+#    - { id: S11, host: 10.50.141.14 }
+#    - { id: S12, host: 10.50.141.12 }
+#    - { id: S13, host: 10.50.141.13 }
+#    - { id: S14, host: 10.50.141.14 }
+#    - { id: S15, host: 10.50.141.12 }
+#    - { id: S16, host: 10.50.141.13 }
+#    - { id: S17, host: 10.50.141.14 }
+
+    LAB_PGs:
+    - { name: -Trunk,      vid: 4095 }
+    - { name: -SA-Mgmt,    vid:   10 }
+    - { name: -SA-iSCSI,   vid:   11 }
+    - { name: -SA-vMotion, vid:   12 }
+    - { name: -SA-Produ,   vid:   13 }
+
+    LAB_ESXi_VMs:
+    - "-SA-ESXi-01"
+    - "-SA-ESXi-02"
+    - "-SA-ESXi-03"
+
+  tasks:
+  - name: 01. Create LAB VM Folder
+    community.vmware.vcenter_folder:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      datacenter: "{{ datacenter_name }}"
+      folder_type: vm
+      folder_name: "{{ item.id }}"
+      parent_folder: "{{ parent_folder }}"
+      state: present
+    loop: "{{ LAB_SID }}"
+    delegate_to: localhost
+    register: sub_folder_creation_result
+
+  - name: 02. Create LAB Standard vSwitch
+    community.vmware.vmware_vswitch:
+      hostname: "{{ item.host }}"
+      username: "{{ esxi_username }}"
+      password: "{{ esxi_password }}"
+      validate_certs: no
+      switch: "{{ item.id }}"
+      security:
+        promiscuous_mode: True
+        mac_changes: True
+        forged_transmits: True      
+    loop: "{{ LAB_SID }}"
+    delegate_to: localhost
+    register: lab_switch_creation_result
+
+  - name: 03. Adding LAB Portgroups to LAB Switch
+    community.vmware.vmware_portgroup:
+      hostname: "{{ item[0].host }}"
+      username: "{{ esxi_username }}"
+      password: "{{ esxi_password }}"
+      esxi_hostname: "{{ item[0].host }}"
+      validate_certs: no
+      switch: "{{ item[0].id }}"
+      portgroup: "{{ item[0].id }}{{ item[1].name }}"
+      vlan_id: "{{ item[1].vid }}"
+    loop: "{{ LAB_SID | product(LAB_PGs) | list }}"
+    delegate_to: localhost
+    register: lab_portgroups_creation_result
+
+  - name: 08. Create LAB ESXi VMs
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      datacenter: '{{datacenter_name}}'
+      folder: "{{ parent_folder }}{{ item[0].id }}"
+      name: "{{ item[0].id }}{{ item[1] }}"
+      state: poweredoff
+      guest_id: vmkernel8Guest
+      esxi_hostname: "{{ item[0].host }}"
+      hardware:
+        num_cpus: 2
+        nested_virt: yes
+        memory_mb: 12288
+      disk:
+      - size_gb: 200
+        controller_type: 'paravirtual'
+        controller_number: 0
+        unit_number: 0
+        type: thin
+        datastore: '{{ datastore_name }}'
+      - size_gb: 50
+        controller_type: 'nvme'
+        controller_number: 0
+        unit_number: 0
+        type: thin
+        datastore: '{{ datastore_name }}'
+      - size_gb: 50
+        controller_type: 'nvme'
+        controller_number: 0
+        unit_number: 1
+        type: thin
+        datastore: '{{ datastore_name }}'
+      - size_gb: 200
+        controller_type: 'nvme'
+        controller_number: 0
+        unit_number: 2
+        type: thin
+        datastore: '{{ datastore_name }}'
+      - size_gb: 200
+        controller_type: 'nvme'
+        controller_number: 0
+        unit_number: 3
+        type: thin
+        datastore: '{{ datastore_name }}'
+      networks:
+      - name: "{{ item[0].id}}-SA-Mgmt"
+        device_type: vmxnet3
+      - name: "{{ item[0].id}}-Trunk"
+        device_type: vmxnet3
+      - name: "{{ item[0].id}}-SA-Mgmt"
+        device_type: vmxnet3
+      - name: "{{ item[0].id}}-Trunk"
+        device_type: vmxnet3
+      cdrom:
+      - controller_number: 0
+        unit_number: 0
+        state: present
+        type: iso
+        iso_path: "[{{ datastore_name }}]\\ISO\\VMware-VMvisor-Installer-8.0U3-24022510.x86_64.iso"
+    loop: "{{ LAB_SID | product(LAB_ESXi_VMs) | list }}"
+    delegate_to: localhost
+    register: create_lab_esxi_vms
