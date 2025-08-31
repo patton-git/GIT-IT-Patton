@@ -45,5 +45,8 @@
           Disable-NetAdapterBinding -Name "*" -ComponentID ms_tcpip6
 
           New-NetFirewallRule -DisplayName "Allow inbound ICMPv4" -Protocol ICMPv4 -IcmpType 8 -Direction Inbound -Action Allow -Enabled True -Profile Any
+
+          netsh routing ip nat add interface "VLAN13" private
+          Restart-Service -Name RemoteAccess -Force
       ignore_errors: no
 
