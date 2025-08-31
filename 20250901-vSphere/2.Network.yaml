@@ -1,34 +1,29 @@
 ---
-- name: Configure Windows NIC Team, VLAN NICs, IPs, IPv6 binding, and firewall
+- name: Configure Windows networking via PowerShell only
   hosts: windows
   gather_facts: no
-
-  collections:
-    - ansible.windows
-    - community.windows
-
   vars:
+    # 필요 시 변수화 가능
     team_name: "LabVlan"
     team_members:
       - "Ethernet2"
-    teaming_mode: "SwitchIndependent"       # SwitchIndependent | LACP | Static
-    load_balancing_algorithm: "Transport"    # Transport | Dynamic | HyperVPort 등 OS 버전에 따라 상이
+    teaming_mode: "SwitchIndependent"
+    load_balancing_algorithm: "Transport"
     vlans:
       - { id: 11, name: "VLAN11", ip: "10.10.11.1", prefix: 24 }
       - { id: 12, name: "VLAN12", ip: "10.10.12.1", prefix: 24 }
       - { id: 13, name: "VLAN13", ip: "10.10.13.1", prefix: 24 }
-    disable_ipv6_nics:
-      - "VLAN11"
-      - "VLAN12"
-      - "VLAN13"
-    icmp_rule_name: "Allow inbound ICMPv4"
+    # 원문은 와일드카드(*) 사용. 안전을 위해 특정 NIC만 지정하려면 아래를 사용하고 스크립트 내 해당 라인 교체
+    ipv6_disable_target: "*"   # 예: ["VLAN11","VLAN12","VLAN13","Ethernet2"]
 
   tasks:
-    - name: Ensure NIC Team and VLANs and IPs via PowerShell (idempotent)
+    - name: Apply networking configuration via PowerShell (idempotent)
       ansible.windows.win_powershell:
         error_action: stop
         script: |
-          # Input variables from Ansible
+          $ErrorActionPreference = 'Stop'
+
+          # 변수 주입
           $teamName = '{{ team_name }}'
           $teamMembers = @({{ team_members | map('to_json') | join(', ') }})
           $teamingMode = '{{ teaming_mode }}'
@@ -38,6 +33,7 @@
             @{ id = {{ v.id }}; name = '{{ v.name }}'; ip='{{ v.ip }}'; prefix={{ v.prefix }} }
           {% endfor %}
           )
+          $ipv6Target = {{ (ipv6_disable_target | to_json) }}
 
           $changed = $false
 
@@ -45,109 +41,146 @@
             param($Name,$Members,$TeamingMode,$Lba)
             $existing = Get-NetLbfoTeam -Name $Name -ErrorAction SilentlyContinue
             if (-not $existing) {
-              New-NetLbfoTeam -Name $Name -TeamMembers $Members -TeamingMode $TeamingMode -LoadBalancingAlgorithm $Lba -Confirm:$false
+              New-NetLbfoTeam -Name $Name -TeamMembers $Members -TeamingMode $TeamingMode -LoadBalancingAlgorithm $Lba -Confirm:$false | Out-Null
               $script:changed = $true
-            } else {
-              $needUpdate = $false
-              if ($existing.TeamingMode -ne $TeamingMode) { $needUpdate = $true }
-              if ($existing.LoadBalancingAlgorithm -ne $Lba) { $needUpdate = $true }
-              # 멤버 비교(정렬 후 대소문자 무시)
-              $cur = ($existing.Members | Sort-Object) -join '|'
-              $tgt = ($Members | Sort-Object) -join '|'
-              if ($cur -ne $tgt) { $needUpdate = $true }
-              if ($needUpdate) {
-                Set-NetLbfoTeam -Name $Name -TeamingMode $TeamingMode -LoadBalancingAlgorithm $Lba -Confirm:$false
-                # 멤버 재조정: 누락/불필요 멤버 동기화
-                $curMembers = $existing.Members
-                $toAdd = Compare-Object -ReferenceObject $curMembers -DifferenceObject $Members -PassThru | Where-Object { $_ -in $Members }
-                $toRemove = Compare-Object -ReferenceObject $Members -DifferenceObject $curMembers -PassThru | Where-Object { $_ -in $curMembers }
-                if ($toAdd) { Add-NetLbfoTeamMember -Name $toAdd -Team $Name -Confirm:$false }
-                if ($toRemove) { Remove-NetLbfoTeamMember -Name $toRemove -Team $Name -Confirm:$false }
-                $script:changed = $true
-              }
+              return
+            }
+
+            $needUpdate = $false
+            if ($existing.TeamingMode -ne $TeamingMode) { $needUpdate = $true }
+            if ($existing.LoadBalancingAlgorithm -ne $Lba) { $needUpdate = $true }
+
+            # 멤버 비교(정렬 후 문자열화)
+            $cur = ($existing.Members | Sort-Object) -join '|'
+            $tgt = ($Members | Sort-Object) -join '|'
+            if ($cur -ne $tgt) { $needUpdate = $true }
+
+            if ($needUpdate) {
+              Set-NetLbfoTeam -Name $Name -TeamingMode $TeamingMode -LoadBalancingAlgorithm $Lba -Confirm:$false | Out-Null
+
+              # 멤버 동기화
+              $curMembers = $existing.Members
+              $toAdd = $Members | Where-Object { $_ -notin $curMembers }
+              $toRemove = $curMembers | Where-Object { $_ -notin $Members }
+              if ($toAdd) { Add-NetLbfoTeamMember -Name $toAdd -Team $Name -Confirm:$false | Out-Null }
+              if ($toRemove) { Remove-NetLbfoTeamMember -Name $toRemove -Team $Name -Confirm:$false | Out-Null }
+
+              $script:changed = $true
             }
           }
 
           function Ensure-TeamVlan {
             param($Team,$VlanId,$Name)
-            $existing = Get-NetLbfoTeamNic -Team $Team -ErrorAction SilentlyContinue | Where-Object { $_.VlanID -eq $VlanId -or $_.Name -eq $Name }
+            $existing = Get-NetLbfoTeamNic -Team $Team -ErrorAction SilentlyContinue | Where-Object { $_.Name -eq $Name -or $_.VlanID -eq $VlanId }
             if (-not $existing) {
-              Add-NetLbfoTeamNic -Team $Team -VlanID $VlanId -Name $Name -Confirm:$false
+              Add-NetLbfoTeamNic -Team $Team -VlanID $VlanId -Name $Name -Confirm:$false | Out-Null
               $script:changed = $true
-            } else {
-              # 이름 또는 VLANID가 상이한 경우 재생성 필요할 수 있으나, 충돌 방지 위해 상태만 보장
-              if ($existing.Name -ne $Name -or $existing.VlanID -ne $VlanId) {
-                # 보수적으로 동일 VLANID/이름 상태 맞춤: 이름 다르면 Rename, VLANID 다르면 재생성
-                if ($existing.Name -ne $Name) {
-                  Rename-NetAdapter -Name $existing.Name -NewName $Name -Confirm:$false
-                  $script:changed = $true
-                }
-                if ($existing.VlanID -ne $VlanId) {
-                  Remove-NetLbfoTeamNic -Team $Team -VlanID $existing.VlanID -Confirm:$false
-                  Add-NetLbfoTeamNic -Team $Team -VlanID $VlanId -Name $Name -Confirm:$false
-                  $script:changed = $true
-                }
-              }
+              return
+            }
+
+            # 이름/ID 정합성 보정
+            if ($existing.Name -ne $Name) {
+              Rename-NetAdapter -Name $existing.Name -NewName $Name -Confirm:$false | Out-Null
+              $script:changed = $true
+            }
+            if ($existing.VlanID -ne $VlanId) {
+              Remove-NetLbfoTeamNic -Team $Team -VlanID $existing.VlanID -Confirm:$false | Out-Null
+              Add-NetLbfoTeamNic -Team $Team -VlanID $VlanId -Name $Name -Confirm:$false | Out-Null
+              $script:changed = $true
             }
           }
 
           function Ensure-IpAddress {
             param($IfAlias,$Ip,$Prefix)
-            $existing = Get-NetIPAddress -InterfaceAlias $IfAlias -AddressFamily IPv4 -ErrorAction SilentlyContinue | Where-Object { $_.IPAddress -eq $Ip -and $_.PrefixLength -eq $Prefix }
-            if (-not $existing) {
-              # 기존 다른 IPv4가 있다면 제거(정책에 따라 유지/교체 선택)
-              $others = Get-NetIPAddress -InterfaceAlias $IfAlias -AddressFamily IPv4 -ErrorAction SilentlyContinue | Where-Object { $_.IPAddress -ne $Ip }
-              if ($others) {
-                foreach ($o in $others) { Remove-NetIPAddress -InterfaceIndex $o.InterfaceIndex -IPAddress $o.IPAddress -Confirm:$false -ErrorAction SilentlyContinue }
+            $hasExact = Get-NetIPAddress -InterfaceAlias $IfAlias -AddressFamily IPv4 -ErrorAction SilentlyContinue |
+                        Where-Object { $_.IPAddress -eq $Ip -and $_.PrefixLength -eq $Prefix }
+            if ($hasExact) { return }
+
+            # 기존 IPv4가 있으면 제거(정책에 맞게 조정 가능)
+            $others = Get-NetIPAddress -InterfaceAlias $IfAlias -AddressFamily IPv4 -ErrorAction SilentlyContinue |
+                      Where-Object { $_.IPAddress -ne $Ip }
+            if ($others) {
+              foreach ($o in $others) {
+                try { Remove-NetIPAddress -InterfaceIndex $o.InterfaceIndex -IPAddress $o.IPAddress -Confirm:$false -ErrorAction Stop | Out-Null } catch {}
               }
-              New-NetIPAddress -InterfaceAlias $IfAlias -IPAddress $Ip -PrefixLength $Prefix -AddressFamily IPv4
-              $script:changed = $true
+            }
+            New-NetIPAddress -InterfaceAlias $IfAlias -IPAddress $Ip -PrefixLength $Prefix -AddressFamily IPv4 | Out-Null
+            $script:changed = $true
+          }
+
+          function Ensure-IPv6Binding {
+            param($Target)
+            # 원문 스크립트와 동일: Disable-NetAdapterBinding -Name "*" -ComponentID ms_tcpip6
+            if ($Target -is [string]) {
+              $nameParam = $Target
+              $current = Get-NetAdapterBinding -Name $nameParam -ComponentID ms_tcpip6 -ErrorAction SilentlyContinue
+              if ($current -and $current.Enabled) {
+                Disable-NetAdapterBinding -Name $nameParam -ComponentID ms_tcpip6 -Confirm:$false | Out-Null
+                $script:changed = $true
+              }
+            } else {
+              foreach ($n in $Target) {
+                $current = Get-NetAdapterBinding -Name $n -ComponentID ms_tcpip6 -ErrorAction SilentlyContinue
+                if ($current -and $current.Enabled) {
+                  Disable-NetAdapterBinding -Name $n -ComponentID ms_tcpip6 -Confirm:$false | Out-Null
+                  $script:changed = $true
+                }
+              }
             }
           }
 
-          # 실행
+          function Ensure-Icmpv4InboundRule {
+            param($DisplayName)
+            $rule = Get-NetFirewallRule -DisplayName $DisplayName -ErrorAction SilentlyContinue
+            if (-not $rule) {
+              New-NetFirewallRule -DisplayName $DisplayName -Protocol ICMPv4 -IcmpType 8 -Direction Inbound -Action Allow -Enabled True -Profile Any | Out-Null
+              $script:changed = $true
+            } else {
+              # 필요한 속성 보정
+              $needFix = $false
+              $props = $rule | Get-NetFirewallRule
+              if ($props.Enabled -ne 'True') { $needFix = $true }
+              if ($props.Direction -ne 'Inbound') { $needFix = $true }
+              if ($props.Action -ne 'Allow') { $needFix = $true }
+              if ($needFix) {
+                Set-NetFirewallRule -DisplayName $DisplayName -Enabled True -Direction Inbound -Action Allow | Out-Null
+                $script:changed = $true
+              }
+              # 프로토콜/ICMP 타입 보정
+              $filters = Get-NetFirewallPortFilter -AssociatedNetFirewallRule $rule -ErrorAction SilentlyContinue
+              $pfFixNeeded = $false
+              # 프로토콜/타입 재적용(간단화)
+              if ($filters -eq $null) { $pfFixNeeded = $true }
+              if ($pfFixNeeded) {
+                Remove-NetFirewallRule -DisplayName $DisplayName -ErrorAction SilentlyContinue
+                New-NetFirewallRule -DisplayName $DisplayName -Protocol ICMPv4 -IcmpType 8 -Direction Inbound -Action Allow -Enabled True -Profile Any | Out-Null
+                $script:changed = $true
+              }
+            }
+          }
+
+          # 실행 순서
           Ensure-NicTeam -Name $teamName -Members $teamMembers -TeamingMode $teamingMode -Lba $lba
           foreach ($v in $vlans) {
             Ensure-TeamVlan -Team $teamName -VlanId $v.id -Name $v.name
             Ensure-IpAddress -IfAlias $v.name -Ip $v.ip -Prefix $v.prefix
           }
+          Ensure-IPv6Binding -Target $ipv6Target
+          Ensure-Icmpv4InboundRule -DisplayName 'Allow inbound ICMPv4'
 
-          # Ansible 결과 반환
-          $result = @{
+          # 결과 반환(Ansible changed 판단용)
+          [pscustomobject]@{
             changed = $changed
-            team = $teamName
-            vlans = $vlans
-          }
-          $result | ConvertTo-Json -Compress
-      register: net_cfg
+          } | ConvertTo-Json -Compress
+      register: net_config
 
-    - name: Disable IPv6 binding on selected adapters (explicit list)
-      community.windows.win_net_adapter_binding:
-        name: "{{ item }}"
-        component_id: ms_tcpip6
-        state: disabled
-      loop: "{{ disable_ipv6_nics }}"
+    - name: Mark task changed when PowerShell reported changes
+      ansible.builtin.set_fact:
+        net_config_changed: "{{ (net_config.stdout | default('{}')) | from_json | dict2items | selectattr('key','equalto','changed') | map(attribute='value') | list | first | default(false) }}"
+      changed_when: "{{ net_config_changed | bool }}"
+      failed_when: false
 
-    - name: Ensure firewall rule for inbound ICMPv4 echo
-      community.windows.win_firewall_rule:
-        name: "{{ icmp_rule_name }}"
-        display_name: "{{ icmp_rule_name }}"
-        enabled: yes
-        state: present
-        direction: in
-        action: allow
-        profiles:
-          - domain
-          - private
-          - public
-        protocol: icmpv4
-        icmp_types: [8]
-
-    - name: Reboot if required by Windows (generic)
+    # 필요 시 재부팅을 적용하려면 조건을 조정하십시오.
+    - name: Reboot if Windows indicates a pending reboot
       ansible.windows.win_reboot:
       when: ansible_reboot_pending | default(false)
-
-    - name: Debug net config change summary
-      ansible.windows.win_debug:
-        var: net_cfg.stdout
-
