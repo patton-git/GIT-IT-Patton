@@ -1,1 +1,153 @@
+---
+- name: Configure Windows NIC Team, VLAN NICs, IPs, IPv6 binding, and firewall
+  hosts: windows
+  gather_facts: no
+
+  collections:
+    - ansible.windows
+    - community.windows
+
+  vars:
+    team_name: "LabVlan"
+    team_members:
+      - "Ethernet2"
+    teaming_mode: "SwitchIndependent"       # SwitchIndependent | LACP | Static
+    load_balancing_algorithm: "Transport"    # Transport | Dynamic | HyperVPort 등 OS 버전에 따라 상이
+    vlans:
+      - { id: 11, name: "VLAN11", ip: "10.10.11.1", prefix: 24 }
+      - { id: 12, name: "VLAN12", ip: "10.10.12.1", prefix: 24 }
+      - { id: 13, name: "VLAN13", ip: "10.10.13.1", prefix: 24 }
+    disable_ipv6_nics:
+      - "VLAN11"
+      - "VLAN12"
+      - "VLAN13"
+    icmp_rule_name: "Allow inbound ICMPv4"
+
+  tasks:
+    - name: Ensure NIC Team and VLANs and IPs via PowerShell (idempotent)
+      ansible.windows.win_powershell:
+        error_action: stop
+        script: |
+          # Input variables from Ansible
+          $teamName = '{{ team_name }}'
+          $teamMembers = @({{ team_members | map('to_json') | join(', ') }})
+          $teamingMode = '{{ teaming_mode }}'
+          $lba = '{{ load_balancing_algorithm }}'
+          $vlans = @(
+          {% for v in vlans %}
+            @{ id = {{ v.id }}; name = '{{ v.name }}'; ip='{{ v.ip }}'; prefix={{ v.prefix }} }
+          {% endfor %}
+          )
+
+          $changed = $false
+
+          function Ensure-NicTeam {
+            param($Name,$Members,$TeamingMode,$Lba)
+            $existing = Get-NetLbfoTeam -Name $Name -ErrorAction SilentlyContinue
+            if (-not $existing) {
+              New-NetLbfoTeam -Name $Name -TeamMembers $Members -TeamingMode $TeamingMode -LoadBalancingAlgorithm $Lba -Confirm:$false
+              $script:changed = $true
+            } else {
+              $needUpdate = $false
+              if ($existing.TeamingMode -ne $TeamingMode) { $needUpdate = $true }
+              if ($existing.LoadBalancingAlgorithm -ne $Lba) { $needUpdate = $true }
+              # 멤버 비교(정렬 후 대소문자 무시)
+              $cur = ($existing.Members | Sort-Object) -join '|'
+              $tgt = ($Members | Sort-Object) -join '|'
+              if ($cur -ne $tgt) { $needUpdate = $true }
+              if ($needUpdate) {
+                Set-NetLbfoTeam -Name $Name -TeamingMode $TeamingMode -LoadBalancingAlgorithm $Lba -Confirm:$false
+                # 멤버 재조정: 누락/불필요 멤버 동기화
+                $curMembers = $existing.Members
+                $toAdd = Compare-Object -ReferenceObject $curMembers -DifferenceObject $Members -PassThru | Where-Object { $_ -in $Members }
+                $toRemove = Compare-Object -ReferenceObject $Members -DifferenceObject $curMembers -PassThru | Where-Object { $_ -in $curMembers }
+                if ($toAdd) { Add-NetLbfoTeamMember -Name $toAdd -Team $Name -Confirm:$false }
+                if ($toRemove) { Remove-NetLbfoTeamMember -Name $toRemove -Team $Name -Confirm:$false }
+                $script:changed = $true
+              }
+            }
+          }
+
+          function Ensure-TeamVlan {
+            param($Team,$VlanId,$Name)
+            $existing = Get-NetLbfoTeamNic -Team $Team -ErrorAction SilentlyContinue | Where-Object { $_.VlanID -eq $VlanId -or $_.Name -eq $Name }
+            if (-not $existing) {
+              Add-NetLbfoTeamNic -Team $Team -VlanID $VlanId -Name $Name -Confirm:$false
+              $script:changed = $true
+            } else {
+              # 이름 또는 VLANID가 상이한 경우 재생성 필요할 수 있으나, 충돌 방지 위해 상태만 보장
+              if ($existing.Name -ne $Name -or $existing.VlanID -ne $VlanId) {
+                # 보수적으로 동일 VLANID/이름 상태 맞춤: 이름 다르면 Rename, VLANID 다르면 재생성
+                if ($existing.Name -ne $Name) {
+                  Rename-NetAdapter -Name $existing.Name -NewName $Name -Confirm:$false
+                  $script:changed = $true
+                }
+                if ($existing.VlanID -ne $VlanId) {
+                  Remove-NetLbfoTeamNic -Team $Team -VlanID $existing.VlanID -Confirm:$false
+                  Add-NetLbfoTeamNic -Team $Team -VlanID $VlanId -Name $Name -Confirm:$false
+                  $script:changed = $true
+                }
+              }
+            }
+          }
+
+          function Ensure-IpAddress {
+            param($IfAlias,$Ip,$Prefix)
+            $existing = Get-NetIPAddress -InterfaceAlias $IfAlias -AddressFamily IPv4 -ErrorAction SilentlyContinue | Where-Object { $_.IPAddress -eq $Ip -and $_.PrefixLength -eq $Prefix }
+            if (-not $existing) {
+              # 기존 다른 IPv4가 있다면 제거(정책에 따라 유지/교체 선택)
+              $others = Get-NetIPAddress -InterfaceAlias $IfAlias -AddressFamily IPv4 -ErrorAction SilentlyContinue | Where-Object { $_.IPAddress -ne $Ip }
+              if ($others) {
+                foreach ($o in $others) { Remove-NetIPAddress -InterfaceIndex $o.InterfaceIndex -IPAddress $o.IPAddress -Confirm:$false -ErrorAction SilentlyContinue }
+              }
+              New-NetIPAddress -InterfaceAlias $IfAlias -IPAddress $Ip -PrefixLength $Prefix -AddressFamily IPv4
+              $script:changed = $true
+            }
+          }
+
+          # 실행
+          Ensure-NicTeam -Name $teamName -Members $teamMembers -TeamingMode $teamingMode -Lba $lba
+          foreach ($v in $vlans) {
+            Ensure-TeamVlan -Team $teamName -VlanId $v.id -Name $v.name
+            Ensure-IpAddress -IfAlias $v.name -Ip $v.ip -Prefix $v.prefix
+          }
+
+          # Ansible 결과 반환
+          $result = @{
+            changed = $changed
+            team = $teamName
+            vlans = $vlans
+          }
+          $result | ConvertTo-Json -Compress
+      register: net_cfg
+
+    - name: Disable IPv6 binding on selected adapters (explicit list)
+      community.windows.win_net_adapter_binding:
+        name: "{{ item }}"
+        component_id: ms_tcpip6
+        state: disabled
+      loop: "{{ disable_ipv6_nics }}"
+
+    - name: Ensure firewall rule for inbound ICMPv4 echo
+      community.windows.win_firewall_rule:
+        name: "{{ icmp_rule_name }}"
+        display_name: "{{ icmp_rule_name }}"
+        enabled: yes
+        state: present
+        direction: in
+        action: allow
+        profiles:
+          - domain
+          - private
+          - public
+        protocol: icmpv4
+        icmp_types: [8]
+
+    - name: Reboot if required by Windows (generic)
+      ansible.windows.win_reboot:
+      when: ansible_reboot_pending | default(false)
+
+    - name: Debug net config change summary
+      ansible.windows.win_debug:
+        var: net_cfg.stdout
 
