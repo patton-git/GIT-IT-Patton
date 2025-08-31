@@ -127,7 +127,7 @@
       validate_certs: no
       datacenter: '{{datacenter_name}}'
       folder: "{{ parent_folder }}{{ item[0].id }}"
-      name: '{{ item[1] }}'
+      name: "{{ item[0].id }}{{ item[1] }}"
       state: poweredoff
       guest_id: vmkernel8Guest
       esxi_hostname: "{{ item[0].host }}"
