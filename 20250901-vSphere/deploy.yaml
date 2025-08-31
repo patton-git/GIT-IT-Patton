@@ -1,21 +1,118 @@
+---
+- name: Deploy Ansible Lab
+  hosts: localhost
+  gather_facts: no
+  vars:
+    ansible_python_interpreter: /bin/python3
+    vcenter_hostname: "vcsa.lab.git"
+    vcenter_username: "s00@lab.git"
+    vcenter_password: "VMware123!"
+    datacenter_name: "Datacenter" 
+    esxi_username: "root"
+    esxi_password: "VMware123!"
+    parent_folder: "2.Students/" 
+    datastore_name: "vsanDatastore" 
+    template_jumpbox: "Template-DC"
+    snapshot_name: "3"
 
+    LAB_SID: 
+    - { id: S00, host: 10.50.141.11 }
+    - { id: S01, host: 10.50.141.12 }
+    - { id: S02, host: 10.50.141.13 }
+    - { id: S03, host: 10.50.141.14 }
+    - { id: S04, host: 10.50.141.11 }
+    - { id: S05, host: 10.50.141.12 }
+    - { id: S06, host: 10.50.141.13 }
+    - { id: S07, host: 10.50.141.14 }
+    - { id: S08, host: 10.50.141.11 }
+    - { id: S09, host: 10.50.141.12 }
+    - { id: S10, host: 10.50.141.13 }
+    - { id: S11, host: 10.50.141.14 }
+    - { id: S12, host: 10.50.141.12 }
+    - { id: S13, host: 10.50.141.13 }
+    - { id: S14, host: 10.50.141.14 }
+    - { id: S15, host: 10.50.141.12 }
+    - { id: S16, host: 10.50.141.13 }
+    - { id: S17, host: 10.50.141.14 }
 
+    LAB_PGs:
+    - { name: -Trunk,      vid: 4095 }
+    - { name: -SA-Mgmt,    vid:   10 }
+    - { name: -SA-iSCSI,   vid:   11 }
+    - { name: -SA-vMotion, vid:   12 }
+    - { name: -SA-Produ,   vid:   13 }
 
-
-
-
-
-
-  - name: 12. Change SA-ESXi-01 VM Nics
-    community.vmware.vmware_guest_network:
+  tasks:
+  - name: 01. Create LAB VM Folder
+    community.vmware.vcenter_folder:
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       validate_certs: no
-      name: "{{ item[0].id + '-SA-ESXi-01'}}"
-      label: "{{ item[1].label }}"
-      network_name: "{{ item[0].id + item[1].pg }}"
+      datacenter: "{{ datacenter_name }}"
+      folder_type: vm
+      folder_name: "{{ item.id }}"
+      parent_folder: "{{ parent_folder }}"
       state: present
-      force: yes
-    loop: "{{ SID_ESXi | product(ESXi_NICs) | list }}"
+    loop: "{{ LAB_SID }}"
     delegate_to: localhost
+    register: sub_folder_creation_result
+
+  - name: 02. Create LAB Standard vSwitch
+    community.vmware.vmware_vswitch:
+      hostname: "{{ item.host }}"
+      username: "{{ esxi_username }}"
+      password: "{{ esxi_password }}"
+      validate_certs: false
+      switch: "{{ item.id }}"
+      security:
+        promiscuous_mode: True
+        mac_changes: True
+        forged_transmits: True      
+    loop: "{{ LAB_SID }}"
+    delegate_to: localhost
+    register: lab_switch_creation_result
+
+  - name: 03. Adding LAB Portgroups to LAB Switch
+    community.vmware.vmware_portgroup:
+      hostname: "{{ item.host }}"
+      username: "{{ esxi_username }}"
+      password: "{{ esxi_password }}"
+      esxi_hostname: "{{ item[0].host }}"
+      validate_certs: no
+      switch: "{{ item[0].id }}"
+      portgroup: "{{ item[0].id }}{{ item[1].name }}"
+      vlan_id: {{ item[1].vid }}
+    loop: "{{ SID_ESXi | product(LAB_PGs) | list }}"
+    delegate_to: localhost
+    register: lab_portgroups_creation_result
+    when: lab_switch_creation_result.msg == "All items completed"
+
+
+  - name: 05. Deploy Lab DC vm
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ item.id }}-DC"
+      state: "poweredon"
+      datacenter: "{{ datacenter_name }}"
+      folder: "{{ parent_folder }}{{ item.id }}"
+      esxi_hostname: "{{ item.host }}"
+      datastore: "{{ datastore_name }}"
+      template: "{{ template_jumpbox }}"
+      linked_clone: True
+      snapshot_src: "{{ snapshot_name }}"
+      networks:
+        - name: "{{ item.id }}-SA-Mgmt"
+          label: "Network adapter 1"
+        - name: "VM-10.50.141"
+          label: "Network adapter 2"
+        - name: "{{ item.id }}-Trunk"
+          label: "Network adapter 3"
+    loop: "{{ LAB_SID }}"
+    delegate_to: localhost
+    register: lab_vm_creation_result
+    when: lab_portgroups_creation_result.msg == "All items completed"
+
