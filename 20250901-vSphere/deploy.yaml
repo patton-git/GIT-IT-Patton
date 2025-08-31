@@ -1,1 +1,21 @@
 
+
+
+
+
+
+
+
+  - name: 12. Change SA-ESXi-01 VM Nics
+    community.vmware.vmware_guest_network:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ item[0].id + '-SA-ESXi-01'}}"
+      label: "{{ item[1].label }}"
+      network_name: "{{ item[0].id + item[1].pg }}"
+      state: present
+      force: yes
+    loop: "{{ SID_ESXi | product(ESXi_NICs) | list }}"
+    delegate_to: localhost
