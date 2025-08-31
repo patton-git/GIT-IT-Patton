@@ -10,26 +10,6 @@
       - { name: sa-esxi-02, ip: 10.10.10.31 }
       - { name: sa-esxi-03, ip: 10.10.10.32 }
 
-    team_name: LabVlan
-    team_members:
-      - Ethernet2
-    teaming_mode: SwitchIndependent      # PowerShell: -TeamingMode SwitchIndependent
-    load_balancing_algorithm: Transport  # PowerShell: -LoadBalancingAlgorithm Transport
-
-    vlans:
-      - { id: 11, name: "VLAN11", ip: "10.10.11.1", prefix: 24 }
-      - { id: 12, name: "VLAN12", ip: "10.10.12.1", prefix: 24 }
-      - { id: 13, name: "VLAN13", ip: "10.10.13.1", prefix: 24 }
-
-    disable_ipv6_nics:
-      - VLAN11
-      - VLAN12
-      - VLAN13
-      - "{{ team_members | list }}"
-
-    # 방화벽 규칙 명칭
-    icmp_rule_name: "Allow inbound ICMPv4"
-
   tasks:
     - name: Add Forward DNS records
       community.windows.win_dns_record:
@@ -49,58 +29,21 @@
         zone: "10.10.10.in-addr.arpa"
       loop: "{{ DNS_Records }}"
 
-    - name: Ensure NIC Team exists with desired properties
-      community.windows.win_net_lbfo_team:
-        name: "{{ team_name }}"
-        members: "{{ team_members }}"
-        teaming_mode: "{{ teaming_mode }}"
-        load_balancing_algorithm: "{{ load_balancing_algorithm }}"
-        state: present
-      register: team_result
+    - name: Execute original PowerShell script
+      ansible.windows.win_powershell:
+        script: |
+          New-NetLbfoTeam -Name "LabVlan" -TeamMembers "Ethernet2" -TeamingMode SwitchIndependent -LoadBalancingAlgorithm Transport -confirm:$false
 
-    - name: Ensure VLAN Team NICs exist
-      community.windows.win_net_lbfo_team_nic:
-        team: "{{ team_name }}"
-        name: "{{ item.name }}"
-        vlan_id: "{{ item.id }}"
-        state: present
-      loop: "{{ vlans }}"
-      register: vlan_nic_result
+          Add-NetLbfoTeamNic -Team "LabVlan" -VlanID 11 -Name "VLAN11" -confirm:$false
+          Add-NetLbfoTeamNic -Team "LabVlan" -VlanID 12 -Name "VLAN12" -confirm:$false
+          Add-NetLbfoTeamNic -Team "LabVlan" -VlanID 13 -Name "VLAN13" -confirm:$false
 
-    - name: Assign IPv4 addresses to VLAN NICs
-      community.windows.win_net_ipaddress:
-        interface_alias: "{{ item.name }}"
-        ip_address: "{{ item.ip }}"
-        prefix_length: "{{ item.prefix }}"
-        state: present
-      loop: "{{ vlans }}"
+          New-NetIPAddress -InterfaceAlias "VLAN11" -IPAddress 10.10.11.1 -PrefixLength 24
+          New-NetIPAddress -InterfaceAlias "VLAN12" -IPAddress 10.10.12.1 -PrefixLength 24
+          New-NetIPAddress -InterfaceAlias "VLAN13" -IPAddress 10.10.13.1 -PrefixLength 24
 
-    # 주의: 와일드카드(*) 대신 명시적 NIC 목록을 사용하여 안전 적용
-    - name: Disable IPv6 binding on selected adapters
-      community.windows.win_net_adapter_binding:
-        name: "{{ item }}"
-        component_id: ms_tcpip6
-        state: disabled
-      loop: "{{ disable_ipv6_nics | flatten }}"
+          Disable-NetAdapterBinding -Name "*" -ComponentID ms_tcpip6
+
+          New-NetFirewallRule -DisplayName "Allow inbound ICMPv4" -Protocol ICMPv4 -IcmpType 8 -Direction Inbound -Action Allow -Enabled True -Profile Any
       ignore_errors: no
 
-    - name: Ensure firewall rule for inbound ICMPv4 echo is present and enabled
-      community.windows.win_firewall_rule:
-        name: "{{ icmp_rule_name }}"
-        display_name: "{{ icmp_rule_name }}"
-        enabled: yes
-        state: present
-        direction: in
-        action: allow
-        profiles:
-          - domain
-          - private
-          - public
-        protocol: icmpv4
-        icmp_types:
-          - 8
-
-    # 필요 시 재부팅(드라이버/바인딩 변화 후)
-    - name: Reboot if required
-      ansible.windows.win_reboot:
-      when: ansible_reboot_pending | default(false) or team_result.reboot_required | default(false)
