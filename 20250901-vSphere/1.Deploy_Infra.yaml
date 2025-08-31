@@ -132,7 +132,6 @@
     loop: "{{ LAB_SID }}"
     delegate_to: localhost
 
-
   - name: 07. Poweron Lab DC vm
     community.vmware.vmware_guest:
       hostname: "{{ vcenter_hostname }}"
