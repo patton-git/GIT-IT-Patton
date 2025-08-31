@@ -42,6 +42,11 @@
     - { name: -SA-vMotion, vid:   12 }
     - { name: -SA-Produ,   vid:   13 }
 
+    LAB_ESXi_VMs:
+    - "-SA-ESXi-01"
+    - "-SA-ESXi-02"
+    - "-SA-ESXi-03"
+
   tasks:
   - name: 01. Create LAB VM Folder
     community.vmware.vcenter_folder:
@@ -63,7 +68,7 @@
       hostname: "{{ item.host }}"
       username: "{{ esxi_username }}"
       password: "{{ esxi_password }}"
-      validate_certs: false
+      validate_certs: no
       switch: "{{ item.id }}"
       security:
         promiscuous_mode: True
@@ -87,7 +92,6 @@
     delegate_to: localhost
     register: lab_portgroups_creation_result
     when: lab_switch_creation_result.msg == "All items completed"
-
 
   - name: 05. Deploy Lab DC vm
     community.vmware.vmware_guest:
@@ -113,6 +117,70 @@
           label: "Network adapter 3"
     loop: "{{ LAB_SID }}"
     delegate_to: localhost
-    register: lab_vm_creation_result
-    when: lab_portgroups_creation_result.msg == "All items completed"
+    register: lab_dc_creation_result
 
+  - name: 06. Create LAB ESXi VMs
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      datacenter: '{{datacenter_name}}'
+      folder: "{{ parent_folder }}{{ item[0].id }}"
+      name: '{{ item.vmname }}'
+      state: poweredoff
+      guest_id: vmkernel8Guest
+      esxi_hostname: "{{ item[0].host }}"
+      hardware:
+        num_cpus: 2
+        nested_virt: yes
+        memory_mb: 12288
+      disk:
+      - size_gb: 200
+        controller_type: 'paravirtual'
+        controller_number: 0
+        unit_number: 0
+        type: thin
+        datastore: '{{ datastore_name }}'
+      - size_gb: 50
+        controller_type: 'nvme'
+        controller_number: 0
+        unit_number: 0
+        type: thin
+        datastore: '{{ datastore_name }}'
+      - size_gb: 50
+        controller_type: 'nvme'
+        controller_number: 0
+        unit_number: 1
+        type: thin
+        datastore: '{{ datastore_name }}'
+      - size_gb: 200
+        controller_type: 'nvme'
+        controller_number: 0
+        unit_number: 2
+        type: thin
+        datastore: '{{ datastore_name }}'
+      - size_gb: 200
+        controller_type: 'nvme'
+        controller_number: 0
+        unit_number: 3
+        type: thin
+        datastore: '{{ datastore_name }}'
+      networks:
+      - name: "{{ item[0].id}}-SA-Mgmt"
+        device_type: vmxnet3
+      - name: "{{ item[0].id}}-Trunk"
+        device_type: vmxnet3
+      - name: "{{ item[0].id}}-SA-Mgmt"
+        device_type: vmxnet3
+      - name: "{{ item[0].id}}-Trunk"
+        device_type: vmxnet3
+      cdrom:
+      - controller_number: 0
+        unit_number: 0
+        state: present
+        type: iso
+        iso_path: "[{{ datastore_name }}]\\ISO\\VMware-VMvisor-Installer-8.0U3-24022510.x86_64.iso'
+    loop: "{{ SID_ESXi | product(LAB_ESXi_VMs) | list }}"
+    delegate_to: localhost
+    register: create_lab_esxi_vms
