@@ -11,7 +11,6 @@
     esxi_username: "root"
     esxi_password: "VMware123!"
     parent_folder: "1Day-Class/" 
-#    datastore_name: "vsanDatastore"
     template_dc: "DC"
     template_vcsa: "VCSA"
     template_esxi01: "ESXi-01"
@@ -137,7 +136,7 @@
       datacenter: "{{ datacenter_name }}"
       folder: "{{ parent_folder }}{{ item.id }}"
       esxi_hostname: "{{ item.host }}"
-      datastore: "{{ datastore_name }}"
+      datastore: "{{ item.ds }}"
       networks:
         - name: "{{ item.id }}-Trunk"
           label: "Network adapter 1"
@@ -187,7 +186,7 @@
       datacenter: "{{ datacenter_name }}"
       folder: "{{ parent_folder }}{{ item.id }}"
       esxi_hostname: "{{ item.host }}"
-      datastore: "{{ datastore_name }}"
+      datastore: "{{ item.ds }}"
       networks:
         - name: "{{ item.id }}-Mgmt"
           label: "Network adapter 1"
