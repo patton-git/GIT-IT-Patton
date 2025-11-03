@@ -1,0 +1,172 @@
+---
+- name: Deploy Template VM to each Host
+  hosts: localhost
+  gather_facts: no
+  vars:
+    ansible_python_interpreter: /bin/python3
+    vcenter_hostname: "172.30.1.202"
+    vcenter_username: "administrator@vsphere.local"
+    vcenter_password: "VMware1!"
+    datacenter_name: "Alpha Datacenter" 
+    esxi_username: "root"
+    esxi_password: "VMware1!"
+    parent_folder: "1Day-Class/" 
+    datastore_name: "vsanDatastore" 
+    template_jumpbox: "1Day-DC-esxi01"
+
+    Host_Datastore: 
+#    - { host: esxi-01.vclass.rapa, datastore: ESXi01-LocalDisk0 }
+    - { host: esxi-02.vclass.rapa, datastore: ESXi02-LocalDisk1 }
+    - { host: esxi-03.vclass.rapa, datastore: ESXi03-LocalDisk1 }
+    - { host: esxi-04.vclass.rapa, datastore: ESXi04-LocalDisk1 }
+    - { host: esxi-05.vclass.rapa, datastore: ESXi05-LocalDisk1 }
+
+  tasks:
+
+  - name: 01. Deploy Lab DC template to each host
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ item.host }}-DC"
+      datacenter: "{{ datacenter_name }}"
+      folder: "{{ parent_folder }}"
+      esxi_hostname: "{{ item.host }}"
+      datastore: "{{ item.datastore }}"
+      template: "esxi-01.vclass.rapa-DC"
+    loop: "{{ Host_Datastore }}"
+    delegate_to: localhost
+
+  - name: 02. Create a snapshot for linked Clone
+    community.vmware.vmware_guest_snapshot:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      datacenter: "{{ datacenter_name }}"
+      folder: "{{ parent_folder }}"
+      name: "{{item.host}}-DC"
+      state: present
+      snapshot_name: "linked"
+    loop: "{{ Host_Datastore }}"
+    delegate_to: localhost
+
+  - name: 03. Deploy Lab VCSA template to each host
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ item.host }}-VCSA"
+      datacenter: "{{ datacenter_name }}"
+      folder: "{{ parent_folder }}"
+      esxi_hostname: "{{ item.host }}"
+      datastore: "{{ item.datastore }}"
+      template: "esxi-01.vclass.rapa-VCSA"
+    loop: "{{ Host_Datastore }}"
+    delegate_to: localhost
+
+  - name: 04. Create a snapshot for linked Clone
+    community.vmware.vmware_guest_snapshot:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      datacenter: "{{ datacenter_name }}"
+      folder: "{{ parent_folder }}"
+      name: "{{item.host}}-VCSA"
+      state: present
+      snapshot_name: "linked"
+    loop: "{{ Host_Datastore }}"
+    delegate_to: localhost
+
+
+  - name: 05. Deploy Lab ESXi-01 template to each host
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ item.host }}-ESXi-01"
+      datacenter: "{{ datacenter_name }}"
+      folder: "{{ parent_folder }}"
+      esxi_hostname: "{{ item.host }}"
+      datastore: "{{ item.datastore }}"
+      template: "esxi-01.vclass.rapa-ESXi-01"
+    loop: "{{ Host_Datastore }}"
+    delegate_to: localhost
+
+  - name: 06. Create a snapshot for linked Clone
+    community.vmware.vmware_guest_snapshot:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      datacenter: "{{ datacenter_name }}"
+      folder: "{{ parent_folder }}"
+      name: "{{item.host}}-ESXi-01"
+      state: present
+      snapshot_name: "linked"
+    loop: "{{ Host_Datastore }}"
+    delegate_to: localhost
+
+
+  - name: 07. Deploy Lab ESXi-02 template to each host
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ item.host }}-ESXi-02"
+      datacenter: "{{ datacenter_name }}"
+      folder: "{{ parent_folder }}"
+      esxi_hostname: "{{ item.host }}"
+      datastore: "{{ item.datastore }}"
+      template: "esxi-01.vclass.rapa-ESXi-02"
+    loop: "{{ Host_Datastore }}"
+    delegate_to: localhost
+
+  - name: 08. Create a snapshot for linked Clone
+    community.vmware.vmware_guest_snapshot:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      datacenter: "{{ datacenter_name }}"
+      folder: "{{ parent_folder }}"
+      name: "{{item.host}}-ESXi-02"
+      state: present
+      snapshot_name: "linked"
+    loop: "{{ Host_Datastore }}"
+    delegate_to: localhost
+
+  - name: 09. Deploy Lab ESXi-03 template to each host
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ item.host }}-ESXi-03"
+      datacenter: "{{ datacenter_name }}"
+      folder: "{{ parent_folder }}"
+      esxi_hostname: "{{ item.host }}"
+      datastore: "{{ item.datastore }}"
+      template: "esxi-01.vclass.rapa-ESXi-03"
+    loop: "{{ Host_Datastore }}"
+    delegate_to: localhost
+
+  - name: 10. Create a snapshot for linked Clone
+    community.vmware.vmware_guest_snapshot:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      datacenter: "{{ datacenter_name }}"
+      folder: "{{ parent_folder }}"
+      name: "{{item.host}}-ESXi-03"
+      state: present
+      snapshot_name: "linked"
+    loop: "{{ Host_Datastore }}"
+    delegate_to: localhost
+
