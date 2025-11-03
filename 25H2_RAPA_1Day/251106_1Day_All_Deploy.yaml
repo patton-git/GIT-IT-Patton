@@ -19,25 +19,24 @@
     snapshot_name: "linked"
 
     LAB_SID: 
-#    - { id: S00, host: 192.168.0.121, ds: ESXi05-LocalDisk1 }
-#    - { id: S01, host: 192.168.0.122, ds: ESXi01-LocalDisk0 }
-#    - { id: S02, host: 192.168.0.123, ds: ESXi02-LocalDisk1 }
-#    - { id: S03, host: 192.168.0.124, ds: ESXi03-LocalDisk1 }
-#    - { id: S04, host: 192.168.0.126, ds: ESXi04-LocalDisk1 }
-#    - { id: S05, host: esxi-05.vclass.rapa, ds: ESXi05-LocalDisk1 }
-#    - { id: S06, host: esxi-01.vclass.rapa, ds: ESXi01-LocalDisk0 }
-#    - { id: S07, host: esxi-02.vclass.rapa, ds: ESXi02-LocalDisk1 }
-#    - { id: S08, host: esxi-03.vclass.rapa, ds: ESXi03-LocalDisk1 }
-#    - { id: S09, host: esxi-04.vclass.rapa, ds: ESXi04-LocalDisk1 }
-#    - { id: S10, host: esxi-05.vclass.rapa, ds: ESXi05-LocalDisk1 }
-#    - { id: S11, host: esxi-01.vclass.rapa, ds: ESXi01-LocalDisk0 }
-#    - { id: S12, host: esxi-02.vclass.rapa, ds: ESXi02-LocalDisk1 }
-#    - { id: S13, host: esxi-03.vclass.rapa, ds: ESXi03-LocalDisk1 }
-#    - { id: S14, host: esxi-04.vclass.rapa, ds: ESXi04-LocalDisk1 }
-#    - { id: S15, host: esxi-05.vclass.rapa, ds: ESXi05-LocalDisk1 }
-#    - { id: S16, host: esxi-01.vclass.rapa, ds: ESXi01-LocalDisk0 }
-#    - { id: S17, host: esxi-02.vclass.rapa, ds: ESXi02-LocalDisk1 }
-#    - { id: S17, host: esxi-02.vclass.rapa, ds: ESXi02-LocalDisk1 }
+#    - { id: S01, host: 192.168.0.121, ds: 192.168.0.121-Local1 }
+#    - { id: S02, host: 192.168.0.122, ds: 192.168.0.122-Local2 }
+#    - { id: S03, host: 192.168.0.123, ds: 192.168.0.123-Local1 }
+#    - { id: S04, host: 192.168.0.124, ds: 192.168.0.124-Local2 }
+#    - { id: S05, host: 192.168.0.126, ds: 192.168.0.126-Local2 }
+#    - { id: S06, host: 192.168.0.121, ds: 192.168.0.121-Local1 }
+#    - { id: S07, host: 192.168.0.122, ds: 192.168.0.122-Local2 }
+#    - { id: S08, host: 192.168.0.123, ds: 192.168.0.123-Local1 }
+#    - { id: S09, host: 192.168.0.124, ds: 192.168.0.124-Local2 }
+#    - { id: S10, host: 192.168.0.126, ds: 192.168.0.126-Local2 }
+#    - { id: S11, host: 192.168.0.121, ds: 192.168.0.121-Local1 }
+#    - { id: S12, host: 192.168.0.122, ds: 192.168.0.122-Local2 }
+#    - { id: S13, host: 192.168.0.123, ds: 192.168.0.123-Local1 }
+#    - { id: S14, host: 192.168.0.124, ds: 192.168.0.124-Local2 }
+#    - { id: S15, host: 192.168.0.126, ds: 192.168.0.126-Local2 }
+#    - { id: S16, host: 192.168.0.121, ds: 192.168.0.121-Local1 }
+#    - { id: S17, host: 192.168.0.122, ds: 192.168.0.122-Local2 }
+#    - { id: S00, host: 192.168.0.123, ds: 192.168.0.123-Local1 }
 
     LAB_PGs:
     - { name: -Trunk,   vid: 4095 }
