@@ -2,7 +2,24 @@
 - name: destroy lab
   hosts: localhost
   gather_facts: no
+
   vars:
+    vcenter_hostname: "vcsa.rapa.com"
+    vcenter_username: "administrator@vsphere.local"
+    vcenter_password: "VMware1!"
+    datacenter_name: "RAPA_DC" 
+    esxi_username: "root"
+    esxi_password: "VMware1!"
+    parent_folder: "1Day-Class/" 
+    template_dc: "DC"
+    template_vcsa: "VCSA"
+    template_esxi01: "ESXi-01"
+    template_esxi02: "ESXi-02"
+    template_esxi03: "ESXi-03"
+    snapshot_name: "linked"
+
+    LAB_SID: 
+
     sc_vcsa : "sc-vcsa-01.lab.git"
     vcenter_username: "administrator@vsphere.lab"
     vcenter_password: "VMware1!"
