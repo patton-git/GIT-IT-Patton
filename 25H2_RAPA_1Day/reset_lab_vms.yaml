@@ -20,38 +20,16 @@
 
     LAB_SID: 
 
-    sc_vcsa : "sc-vcsa-01.lab.git"
-    vcenter_username: "administrator@vsphere.lab"
-    vcenter_password: "VMware1!"
-
-    sc_dc: "SC-Datacenter"
-    sc_cluster: "SC-vSAN"
-    sc_ds: "sc-vSAN"
-    sc_fn: "3.SC-Students/"
-
-    sc_esxi: "sc-esxi-01.lab.git"
-    esxi_username: "root"
-    esxi_password: "VMware1!"
-
-    id: "H00"                      ## check existing folder (switch) name
 
   tasks:
-    - name: 01. List-up VMs
-      community.vmware.vmware_vm_info:
-        hostname: '{{ sc_vcsa }}'
-        username: "{{ vcenter_username }}"
-        password: "{{ vcenter_password }}"
-        validate_certs: no
-        folder: '{{ sc_dc }}/vm/{{ sc_fn }}{{ id }}'
-      register: listup_vms
 
-    - name: 02. Stop list-up VMs
+    - name: 02. Stop Lab VMs
       community.vmware.vmware_guest_powerstate:
-        hostname: "{{ sc_vcsa }}"
+        hostname: "{{ vcenter_hostname }}"
         username: "{{ vcenter_username }}"
         password: "{{ vcenter_password }}"
         validate_certs: no
-        datacenter: "{{ sc_dc }}"
+        datacenter: "{{ datacenter_name }}"
         name: "{{ item.guest_name }}"
         state: powered-off
       loop: "{{ listup_vms.virtual_machines }}"
