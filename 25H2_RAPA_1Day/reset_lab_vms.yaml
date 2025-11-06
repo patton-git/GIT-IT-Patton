@@ -32,27 +32,286 @@
 
   tasks:
 
-    - name: 02. Stop Lab VMs
-      community.vmware.vmware_guest_powerstate:
-        hostname: "{{ vcenter_hostname }}"
-        username: "{{ vcenter_username }}"
-        password: "{{ vcenter_password }}"
-        validate_certs: no
-        datacenter: "{{ datacenter_name }}"
-        name: "{{ item.guest_name }}"
-        state: powered-off
-      loop: "{{ LAB_SID | product(LAB_VM_List) | list }}"
-      delegate_to: localhost
+  - name: 02. Stop Lab VMs
+    community.vmware.vmware_guest_powerstate:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      datacenter: "{{ datacenter_name }}"
+      name: "{{ item[0].id }}{{ item[1] }}"
+      state: powered-off
+    loop: "{{ LAB_SID | product(LAB_VM_List) | list }}"
+    delegate_to: localhost
 
-    - name: 03. Delete list-up VMs
-      community.vmware.vmware_guest:
-        hostname: "{{ sc_vcsa }}"
-        username: "{{ vcenter_username }}"
-        password: "{{ vcenter_password }}"
-        validate_certs: no
-        datacenter: "{{ sc_dc }}"
-        folder: '{{ sc_dc }}/vm/{{ sc_fn }}{{ id }}'
-        name: "{{ item.guest_name }}"
-        state: absent
-      loop: "{{ listup_vms.virtual_machines }}"
+  - name: 03. Delete list-up VMs
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      datacenter: "{{ datacenter_name }}"
+      folder: "{{ parent_folder }}{{ item[0].id }}"
+      name: "{{ item[0].id }}{{ item[1] }}"
+      state: absent
+    loop: "{{ LAB_SID | product(LAB_VM_List) | list }}"
+    delegate_to: localhost
 
+  - name: 05. Deploy Lab DC vm
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ item.id }}-DC"
+      datacenter: "{{ datacenter_name }}"
+      folder: "{{ parent_folder }}{{ item.id }}"
+      esxi_hostname: "{{ item.host }}"
+      datastore: "{{ item.ds }}"
+      template: "{{ item.host }}-{{ template_dc }}"
+      linked_clone: True
+      snapshot_src: "{{ snapshot_name }}"
+    loop: "{{ LAB_SID }}"
+    delegate_to: localhost
+
+
+  - name: 06. Change Lab DC vm networks
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ item.id }}-DC"
+      datacenter: "{{ datacenter_name }}"
+      folder: "{{ parent_folder }}{{ item.id }}"
+      esxi_hostname: "{{ item.host }}"
+      datastore: "{{ item.ds }}"
+      networks:
+        - name: "{{ item.id }}-Trunk"
+          label: "Network adapter 1"
+        - name: "VM Network"
+          label: "Network adapter 2"
+    loop: "{{ LAB_SID }}"
+    delegate_to: localhost
+
+
+  - name: 08. Poweron Lab DC vm
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ item.id }}-DC"
+      state: "poweredon"
+    loop: "{{ LAB_SID }}"
+    delegate_to: localhost
+
+
+  - name: 09. Deploy Lab VCSA vm
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ item.id }}-VCSA"
+      datacenter: "{{ datacenter_name }}"
+      folder: "{{ parent_folder }}{{ item.id }}"
+      esxi_hostname: "{{ item.host }}"
+      datastore: "{{ item.ds }}"
+      template: "{{ item.host }}-{{ template_vcsa }}"
+      linked_clone: True
+      snapshot_src: "{{ snapshot_name }}"
+    loop: "{{ LAB_SID }}"
+    delegate_to: localhost
+
+
+  - name: 10. Change Lab VCSA vm networks
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ item.id }}-VCSA"
+      datacenter: "{{ datacenter_name }}"
+      folder: "{{ parent_folder }}{{ item.id }}"
+      esxi_hostname: "{{ item.host }}"
+      datastore: "{{ item.ds }}"
+      networks:
+        - name: "{{ item.id }}-Mgmt"
+          label: "Network adapter 1"
+    loop: "{{ LAB_SID }}"
+    delegate_to: localhost
+
+
+  - name: 11. Poweron Lab VCSA vm
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ item.id }}-VCSA"
+      state: "poweredon"
+    loop: "{{ LAB_SID }}"
+    delegate_to: localhost
+
+
+  - name: 12. Deploy Lab ESXi-01 vm
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ item.id }}-ESXi-01"
+      datacenter: "{{ datacenter_name }}"
+      folder: "{{ parent_folder }}{{ item.id }}"
+      esxi_hostname: "{{ item.host }}"
+      datastore: "{{ item.ds }}"
+      template: "{{ item.host }}-{{ template_esxi01 }}"
+      linked_clone: True
+      snapshot_src: "{{ snapshot_name }}"
+    loop: "{{ LAB_SID }}"
+    delegate_to: localhost
+
+
+  - name: 13. Change Lab ESXi-01 vm networks
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ item.id }}-ESXi-01"
+      datacenter: "{{ datacenter_name }}"
+      folder: "{{ parent_folder }}{{ item.id }}"
+      esxi_hostname: "{{ item.host }}"
+      datastore: "{{ item.ds }}"
+      networks:
+        - name: "{{ item.id }}-Trunk"
+          label: "Network adapter 1"
+        - name: "{{ item.id }}-Trunk"
+          label: "Network adapter 2"
+        - name: "{{ item.id }}-Trunk"
+          label: "Network adapter 3"
+        - name: "{{ item.id }}-Trunk"
+          label: "Network adapter 4"
+    loop: "{{ LAB_SID }}"
+    delegate_to: localhost
+
+
+  - name: 14. Poweron Lab ESXi-01 vm
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ item.id }}-ESXi-01"
+      state: "poweredon"
+    loop: "{{ LAB_SID }}"
+    delegate_to: localhost
+
+
+  - name: 15. Deploy Lab ESXi-02 vm
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ item.id }}-ESXi-02"
+      datacenter: "{{ datacenter_name }}"
+      folder: "{{ parent_folder }}{{ item.id }}"
+      esxi_hostname: "{{ item.host }}"
+      datastore: "{{ item.ds }}"
+      template: "{{ item.host }}-{{ template_esxi02 }}"
+      linked_clone: True
+      snapshot_src: "{{ snapshot_name }}"
+    loop: "{{ LAB_SID }}"
+    delegate_to: localhost
+
+
+  - name: 16. Change Lab ESXi-02 vm networks
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ item.id }}-ESXi-02"
+      datacenter: "{{ datacenter_name }}"
+      folder: "{{ parent_folder }}{{ item.id }}"
+      esxi_hostname: "{{ item.host }}"
+      datastore: "{{ item.ds }}"
+      networks:
+        - name: "{{ item.id }}-Trunk"
+          label: "Network adapter 1"
+        - name: "{{ item.id }}-Trunk"
+          label: "Network adapter 2"
+        - name: "{{ item.id }}-Trunk"
+          label: "Network adapter 3"
+        - name: "{{ item.id }}-Trunk"
+          label: "Network adapter 4"
+    loop: "{{ LAB_SID }}"
+    delegate_to: localhost
+
+
+  - name: 17. Poweron Lab ESXi-02 vm
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ item.id }}-ESXi-02"
+      state: "poweredon"
+    loop: "{{ LAB_SID }}"
+    delegate_to: localhost
+
+
+  - name: 18. Deploy Lab ESXi-03 vm
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ item.id }}-ESXi-03"
+      datacenter: "{{ datacenter_name }}"
+      folder: "{{ parent_folder }}{{ item.id }}"
+      esxi_hostname: "{{ item.host }}"
+      datastore: "{{ item.ds }}"
+      template: "{{ item.host }}-{{ template_esxi03 }}"
+      linked_clone: True
+      snapshot_src: "{{ snapshot_name }}"
+    loop: "{{ LAB_SID }}"
+    delegate_to: localhost
+
+
+  - name: 19. Change Lab ESXi-03 vm networks
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ item.id }}-ESXi-03"
+      datacenter: "{{ datacenter_name }}"
+      folder: "{{ parent_folder }}{{ item.id }}"
+      esxi_hostname: "{{ item.host }}"
+      datastore: "{{ item.ds }}"
+      networks:
+        - name: "{{ item.id }}-Trunk"
+          label: "Network adapter 1"
+        - name: "{{ item.id }}-Trunk"
+          label: "Network adapter 2"
+        - name: "{{ item.id }}-Trunk"
+          label: "Network adapter 3"
+        - name: "{{ item.id }}-Trunk"
+          label: "Network adapter 4"
+    loop: "{{ LAB_SID }}"
+    delegate_to: localhost
+
+
+  - name: 20. Poweron Lab ESXi-03 vm
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      name: "{{ item.id }}-ESXi-03"
+      state: "poweredon"
+    loop: "{{ LAB_SID }}"
+    delegate_to: localhost
