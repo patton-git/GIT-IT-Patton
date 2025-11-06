@@ -19,6 +19,15 @@
     snapshot_name: "linked"
 
     LAB_SID: 
+#    - { id: S17, host: 192.168.0.122, ds: 192.168.0.122-Local2 }
+#    - { id: S00, host: 192.168.0.123, ds: 192.168.0.123-Local1 }
+
+    LAB_VM_list:
+    - "-ESXi-01"
+    - "-ESXi-02"
+    - "-ESXi-03"
+    - "-ESXi-VCSA"
+    - "-ESXi-DC"
 
 
   tasks:
