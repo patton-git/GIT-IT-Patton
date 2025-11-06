@@ -41,7 +41,8 @@
         datacenter: "{{ datacenter_name }}"
         name: "{{ item.guest_name }}"
         state: powered-off
-      loop: "{{ listup_vms.virtual_machines }}"
+      loop: "{{ LAB_SID | product(LAB_VM_List) | list }}"
+      delegate_to: localhost
 
     - name: 03. Delete list-up VMs
       community.vmware.vmware_guest:
@@ -55,30 +56,3 @@
         state: absent
       loop: "{{ listup_vms.virtual_machines }}"
 
-    - name: 04. Remove LAB Standard vSwitch
-      community.vmware.vmware_vswitch:
-        hostname: '{{ item.host }}'
-        username: '{{ esxi_username }}'
-        password: '{{ esxi_password }}'
-        validate_certs: false
-        switch: '{{ item.vswitch }}'
-        state: absent
-      loop:
-        - { host: '{{ sc_esxi }}' , vswitch: '{{ id }}-SC'  }
-      delegate_to: localhost
-
-
-    - name: 05. Remove LAB VM Folder
-      community.vmware.vcenter_folder:
-        hostname: '{{ item.VCSA }}'
-        username: '{{ vcenter_username }}'
-        password: '{{ vcenter_password }}'
-        validate_certs: no
-        datacenter: '{{ item.DC }}'
-        folder_type: vm
-        folder_name: '{{ item.ID }}'
-        parent_folder: '{{ item.FN }}'
-        state: absent
-      loop:
-      - { VCSA: '{{ sc_vcsa }}' , DC: '{{ sc_dc }}', FN: '{{ sc_fn }}', ID: '{{ id }}'  }
-      delegate_to: localhost
