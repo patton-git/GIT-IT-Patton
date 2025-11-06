@@ -1,5 +1,5 @@
 ---
-- name: destroy lab
+- name: reset lab
   hosts: localhost
   gather_facts: no
 
